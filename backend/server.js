@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import { seedDatabase } from './utils/seed.js';
 
+import path from 'path';
+
 // Route Imports
 import authRoutes from './routes/authRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
@@ -14,6 +16,10 @@ import clubRoutes from './routes/clubRoutes.js';
 import placementRoutes from './routes/placementRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import teacherRoutes from './routes/teacherRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 dotenv.config();
 
@@ -25,17 +31,20 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Health Check Route
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     app: 'CampusOne Shared REST API',
-    version: '1.0.0',
+    version: '2.0.0',
     timestamp: new Date()
   });
 });
 
-// API Routes (All 9 Modules)
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/academics', academicRoutes);
@@ -45,6 +54,11 @@ app.use('/api/clubs', clubRoutes);
 app.use('/api/placements', placementRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/productivity', taskRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/teacher', teacherRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 // Global Error Handler
 app.use((err, req, res, next) => {

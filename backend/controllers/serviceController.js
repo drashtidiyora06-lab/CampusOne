@@ -1,9 +1,10 @@
 import ServiceRequest from '../models/ServiceRequest.js';
+import { createNotificationHelper } from './notificationController.js';
 
-// GET /api/services (User's requests, or all requests if admin)
+// GET /api/services (User's requests, or all requests if admin/faculty)
 export const getServiceRequests = async (req, res) => {
   try {
-    const filter = ['faculty', 'placement_admin'].includes(req.user.role)
+    const filter = ['admin', 'faculty', 'placement_admin'].includes(req.user.role)
       ? {}
       : { userId: req.user._id };
 
@@ -47,8 +48,21 @@ export const updateServiceStatus = async (req, res) => {
     }
 
     await request.save();
+
+    // Trigger notification to student
+    if (request.userId) {
+      await createNotificationHelper({
+        userId: request.userId,
+        title: `Service Request ${status.toUpperCase()}`,
+        message: `Your request "${request.subject}" was marked as ${status}. Remark: ${request.adminRemark || 'Processed by admin.'}`,
+        type: 'service',
+        link: '/student/services'
+      });
+    }
+
     res.json({ success: true, request });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+

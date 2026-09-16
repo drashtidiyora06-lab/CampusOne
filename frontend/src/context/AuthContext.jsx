@@ -54,19 +54,20 @@ export const AuthProvider = ({ children }) => {
     fetchMe();
   }, [token]);
 
-  const login = async (email, password) => {
+  const login = async (identifier, password) => {
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { identifier, password, email: identifier });
       if (res.data.success) {
         localStorage.setItem('campusone_token', res.data.token);
         setToken(res.data.token);
         setUser(res.data.user);
-        return { success: true };
+        return { success: true, user: res.data.user };
       }
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || 'Login failed' };
+      return { success: false, message: err.response?.data?.message || 'Invalid credentials' };
     }
   };
+
 
   const register = async (userData) => {
     try {

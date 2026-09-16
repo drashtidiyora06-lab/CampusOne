@@ -234,7 +234,37 @@ const ResourcesPage = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Document PDF Link / Storage URL</label>
+                <label className="form-label">Upload File (PDF / DOCX / PPTX)</label>
+                <input
+                  type="file"
+                  className="form-input"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.zip"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      try {
+                        const upRes = await api.post('/api/upload', formData, {
+                          headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                        if (upRes.data.success) {
+                          setNewResource((prev) => ({
+                            ...prev,
+                            fileUrl: upRes.data.url,
+                            fileName: upRes.data.fileName
+                          }));
+                        }
+                      } catch (err) {
+                        alert('Upload failed');
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Or Document Storage URL</label>
                 <input
                   type="text"
                   className="form-input"
@@ -244,6 +274,7 @@ const ResourcesPage = () => {
                   required
                 />
               </div>
+
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button type="button" className="btn-secondary" onClick={() => setShowUploadModal(false)}>

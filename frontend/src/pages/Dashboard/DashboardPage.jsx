@@ -227,8 +227,8 @@ const DashboardPage = () => {
                   >
                     <span
                       className={`badge ${n.isImportant
-                          ? 'badge-red'
-                          : 'badge-indigo'
+                        ? 'badge-red'
+                        : 'badge-indigo'
                         }`}
                     >
                       {n.category}
@@ -529,10 +529,10 @@ const DashboardPage = () => {
 
                     <span
                       className={`badge ${s.status === 'approved'
-                          ? 'badge-green'
-                          : s.status === 'rejected'
-                            ? 'badge-red'
-                            : 'badge-amber'
+                        ? 'badge-green'
+                        : s.status === 'rejected'
+                          ? 'badge-red'
+                          : 'badge-amber'
                         }`}
                     >
                       {s.status}

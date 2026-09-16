@@ -25,6 +25,7 @@ export const seedDatabase = async () => {
       email: 'student@college.edu',
       password: 'password123',
       role: 'student',
+      studentId: 'STU-2026-101',
       branch: 'Computer Science',
       year: '3rd Year',
       rollNumber: 'CS2026-104',
@@ -36,6 +37,7 @@ export const seedDatabase = async () => {
       email: 'clubadmin@college.edu',
       password: 'password123',
       role: 'club_admin',
+      adminId: 'CLB-2026-012',
       branch: 'Information Technology',
       year: '4th Year',
       rollNumber: 'IT2025-012',
@@ -47,6 +49,7 @@ export const seedDatabase = async () => {
       email: 'placement@college.edu',
       password: 'password123',
       role: 'placement_admin',
+      adminId: 'PL-2026-009',
       branch: 'Placement Cell',
       year: 'Faculty',
       rollNumber: 'FAC-PL-009',
@@ -58,11 +61,25 @@ export const seedDatabase = async () => {
       email: 'faculty@college.edu',
       password: 'password123',
       role: 'faculty',
+      facultyId: 'FAC-CS-022',
       branch: 'Computer Science',
       year: 'Faculty',
       rollNumber: 'FAC-CS-022',
       bio: 'Associate Professor, DBMS & Algorithms'
     });
+
+    const adminUser = await User.create({
+      name: 'Dean Arthur Pendelton',
+      email: 'admin@college.edu',
+      password: 'password123',
+      role: 'admin',
+      adminId: 'ADM-2026-001',
+      branch: 'Administration',
+      year: 'Admin',
+      rollNumber: 'ADM-2026-001',
+      bio: 'Chief Campus Administrator'
+    });
+
 
     // 2. Notices
     await Notice.insertMany([

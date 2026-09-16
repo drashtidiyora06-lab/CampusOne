@@ -48,14 +48,32 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Auth user & get token
+// @desc    Auth user & get token (supports ID or Email)
 // @route   POST /api/auth/login
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, identifier } = req.body;
+    const loginQuery = (identifier || email || '').trim();
 
-    const user = await User.findOne({ email });
+    if (!loginQuery) {
+      return res.status(400).json({ success: false, message: 'Please provide email or user ID' });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        { email: loginQuery.toLowerCase() },
+        { studentId: loginQuery },
+        { facultyId: loginQuery },
+        { adminId: loginQuery },
+        { rollNumber: loginQuery }
+      ]
+    });
+
     if (user && (await user.matchPassword(password))) {
+      if (user.isActive === false) {
+        return res.status(403).json({ success: false, message: 'Account disabled. Please contact Admin.' });
+      }
+
       const token = generateToken(user._id);
       return res.json({
         success: true,
@@ -65,19 +83,24 @@ export const loginUser = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          studentId: user.studentId,
+          facultyId: user.facultyId,
+          adminId: user.adminId,
           branch: user.branch,
           year: user.year,
           rollNumber: user.rollNumber,
-          avatarUrl: user.avatarUrl
+          avatarUrl: user.avatarUrl,
+          bio: user.bio
         }
       });
     }
 
-    res.status(401).json({ success: false, message: 'Invalid email or password' });
+    res.status(401).json({ success: false, message: 'Invalid credentials. Check ID/Email and password.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // @desc    Get user profile
 // @route   GET /api/auth/me

@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
   Bell,
@@ -11,22 +12,79 @@ import {
   FileCheck2,
   CheckSquare,
   User,
-  GraduationCap
+  GraduationCap,
+  Shield,
+  FileText,
+  UserCheck
 } from 'lucide-react';
 
 const Sidebar = () => {
-  const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { label: 'Notices', path: '/notices', icon: Bell },
-    { label: 'Academics', path: '/academics', icon: BookOpen },
-    { label: 'Resources', path: '/resources', icon: FolderDown },
-    { label: 'Campus Guide', path: '/campus-guide', icon: Compass },
-    { label: 'Clubs & Events', path: '/clubs', icon: Users },
-    { label: 'Placements', path: '/placements', icon: Briefcase },
-    { label: 'Student Services', path: '/services', icon: FileCheck2 },
-    { label: 'Productivity', path: '/productivity', icon: CheckSquare },
-    { label: 'My Profile', path: '/profile', icon: User }
-  ];
+
+  const { user } = useAuth();
+
+  const getNavItems = () => {
+    const role = user?.role || 'student';
+
+    if (role === 'faculty' || role === 'teacher') {
+      return [
+        { label: 'Faculty Portal', path: '/teacher/dashboard', icon: LayoutDashboard },
+        { label: 'Submissions & Grading', path: '/teacher/submissions', icon: FileCheck2 },
+        { label: 'Class Academics', path: '/academics', icon: BookOpen },
+        { label: 'Study Resources', path: '/resources', icon: FolderDown },
+        { label: 'Campus Notices', path: '/notices', icon: Bell },
+        { label: 'Campus Guide', path: '/campus-guide', icon: Compass },
+        { label: 'My Profile', path: '/profile', icon: User }
+      ];
+    }
+
+    if (role === 'admin') {
+      return [
+        { label: 'Admin Control Panel', path: '/admin/dashboard', icon: Shield },
+        { label: 'Service Request Approvals', path: '/services', icon: FileCheck2 },
+        { label: 'Notices & Banners', path: '/notices', icon: Bell },
+        { label: 'Academic Courses', path: '/academics', icon: BookOpen },
+        { label: 'Study Resources', path: '/resources', icon: FolderDown },
+        { label: 'Campus Directory', path: '/campus-guide', icon: Compass },
+        { label: 'Clubs & Societies', path: '/clubs', icon: Users },
+        { label: 'Placement Drives', path: '/placements', icon: Briefcase },
+        { label: 'My Profile', path: '/profile', icon: User }
+      ];
+    }
+
+    if (role === 'club_admin') {
+      return [
+        { label: 'Club Workspace', path: '/club-admin/dashboard', icon: LayoutDashboard },
+        { label: 'Clubs Directory', path: '/clubs', icon: Users },
+        { label: 'Announcements', path: '/notices', icon: Bell },
+        { label: 'My Profile', path: '/profile', icon: User }
+      ];
+    }
+
+    if (role === 'placement_admin') {
+      return [
+        { label: 'Placement Officer', path: '/placement-admin/dashboard', icon: LayoutDashboard },
+        { label: 'Active Placement Drives', path: '/placements', icon: Briefcase },
+        { label: 'Announcements', path: '/notices', icon: Bell },
+        { label: 'My Profile', path: '/profile', icon: User }
+      ];
+    }
+
+    // Default Student Navigation
+    return [
+      { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+      { label: 'Notices', path: '/notices', icon: Bell },
+      { label: 'Academics', path: '/academics', icon: BookOpen },
+      { label: 'Resources', path: '/resources', icon: FolderDown },
+      { label: 'Campus Guide', path: '/campus-guide', icon: Compass },
+      { label: 'Clubs & Events', path: '/clubs', icon: Users },
+      { label: 'Placements', path: '/placements', icon: Briefcase },
+      { label: 'Student Services', path: '/services', icon: FileCheck2 },
+      { label: 'Productivity', path: '/productivity', icon: CheckSquare },
+      { label: 'My Profile', path: '/profile', icon: User }
+    ];
+  };
+
+  const navItems = getNavItems();
 
   return (
     <aside style={styles.sidebar}>
@@ -37,13 +95,15 @@ const Sidebar = () => {
         </div>
         <div>
           <h1 style={styles.brandTitle}>CampusOne</h1>
-          <span style={styles.brandSubtitle}>Campus Companion</span>
+          <span style={styles.brandSubtitle}>v2.0 Monorepo</span>
         </div>
       </div>
 
       {/* Nav Menu */}
       <nav style={styles.navMenu}>
-        <div style={styles.sectionLabel}>MAIN NAVIGATION</div>
+        <div style={styles.sectionLabel}>
+          {user?.role ? `${user.role.toUpperCase()} NAVIGATION` : 'STUDENT NAVIGATION'}
+        </div>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -64,12 +124,13 @@ const Sidebar = () => {
 
       {/* Footer info */}
       <div style={styles.footer}>
-        <div style={styles.footerBadge}>v1.0.0 Monorepo</div>
+        <div style={styles.footerBadge}>CampusOne v2.0 Platform</div>
         <div style={styles.footerText}>© 2026 CampusOne</div>
       </div>
     </aside>
   );
 };
+
 
 const styles = {
   sidebar: {

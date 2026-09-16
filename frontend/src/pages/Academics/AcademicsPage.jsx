@@ -297,7 +297,33 @@ const AcademicsPage = () => {
 
             <form onSubmit={handleSubmitAssignment}>
               <div className="form-group">
-                <label className="form-label">Submission File URL / Cloud Link</label>
+                <label className="form-label">Upload PDF / Document File</label>
+                <input
+                  type="file"
+                  className="form-input"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.zip"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      try {
+                        const upRes = await api.post('/api/upload', formData, {
+                          headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                        if (upRes.data.success) {
+                          setSubmissionFile(upRes.data.url);
+                        }
+                      } catch (uploadErr) {
+                        alert('File upload failed, using fallback URL format');
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Or Provide Submission URL / Cloud Link</label>
                 <input
                   type="text"
                   className="form-input"
@@ -317,6 +343,7 @@ const AcademicsPage = () => {
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}

@@ -1,22 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, Shield, LogOut, ChevronDown } from 'lucide-react';
+import api from '../../services/api';
+import { Search, Bell, Shield, LogOut, ChevronDown, Check, CheckCheck } from 'lucide-react';
 
 const Header = () => {
   const navigate = useNavigate();
   const { user, logout, switchRole } = useAuth();
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showNotificationPopover, setShowNotificationPopover] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const rolesList = [
     { key: 'student', label: 'Student Role', color: '#10b981' },
+    { key: 'faculty', label: 'Faculty Role', color: '#6366f1' },
+    { key: 'admin', label: 'Admin Role', color: '#ef4444' },
     { key: 'club_admin', label: 'Club Admin Role', color: '#8b5cf6' },
-    { key: 'placement_admin', label: 'Placement Admin Role', color: '#f59e0b' },
-    { key: 'faculty', label: 'Faculty Role', color: '#6366f1' }
+    { key: 'placement_admin', label: 'Placement Admin Role', color: '#f59e0b' }
   ];
 
   const currentRoleObj = rolesList.find((r) => r.key === user?.role) || rolesList[0];
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      if (res.data.success) {
+        setNotifications(res.data.notifications);
+        setUnreadCount(res.data.unreadCount);
+      }
+    } catch (err) {
+      console.warn('Notification fetch warning');
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      fetchNotifications();
+    } catch (err) {
+      console.warn('Mark read error');
+    }
+  };
 
   const handleSearchKeyDown = (e) => {
     if (e.key === 'Enter' && globalSearch.trim()) {
@@ -39,7 +71,6 @@ const Header = () => {
         />
       </div>
 
-
       {/* Right Controls */}
       <div style={styles.controls}>
         {/* Role Switcher Pill */}
@@ -47,7 +78,7 @@ const Header = () => {
           <button
             style={styles.roleButton}
             onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-            title="Click to test role permissions on the fly"
+            title="Click to switch role preview"
           >
             <Shield size={15} color={currentRoleObj.color} />
             <span style={{ color: currentRoleObj.color, fontWeight: 600 }}>
@@ -79,13 +110,60 @@ const Header = () => {
           )}
         </div>
 
-        {/* Notifications Icon */}
-        <div style={styles.notificationBtn} title="Notices & Notifications">
-          <Bell size={19} color="#94a3b8" />
-          <span style={styles.notificationBadge}>3</span>
+        {/* Notifications Icon & Popover */}
+        <div style={{ position: 'relative' }}>
+          <div
+            style={styles.notificationBtn}
+            onClick={() => setShowNotificationPopover(!showNotificationPopover)}
+            title="Notices & Notifications"
+          >
+            <Bell size={19} color="#94a3b8" />
+            {unreadCount > 0 && <span style={styles.notificationBadge}>{unreadCount}</span>}
+          </div>
+
+          {showNotificationPopover && (
+            <div style={styles.notifPopover}>
+              <div style={styles.notifHeader}>
+                <span style={{ fontWeight: 700, color: '#ffffff', fontSize: '0.85rem' }}>Notifications</span>
+                {unreadCount > 0 && (
+                  <button style={styles.markReadBtn} onClick={handleMarkAllRead}>
+                    <CheckCheck size={14} /> Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div style={styles.notifList}>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
+                    No notifications right now.
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n._id}
+                      style={{
+                        ...styles.notifItem,
+                        backgroundColor: n.read ? 'transparent' : 'rgba(99, 102, 241, 0.1)'
+                      }}
+                      onClick={() => {
+                        if (n.link) navigate(n.link);
+                        setShowNotificationPopover(false);
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.82rem' }}>{n.title}</div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '0.2rem' }}>{n.message}</div>
+                      <div style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.3rem' }}>
+                        {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* User Pill */}
+        {/* User Profile Pill */}
         <div style={styles.userProfile}>
           <img
             src={
@@ -97,7 +175,7 @@ const Header = () => {
           />
           <div style={styles.userInfo}>
             <div style={styles.userName}>{user?.name || 'Student User'}</div>
-            <div style={styles.userBranch}>{user?.branch || 'Computer Science'}</div>
+            <div style={styles.userBranch}>{user?.role?.toUpperCase() || 'STUDENT'}</div>
           </div>
         </div>
 
@@ -109,6 +187,7 @@ const Header = () => {
     </header>
   );
 };
+
 
 const styles = {
   header: {
@@ -263,7 +342,51 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.2s ease'
+  },
+  notifPopover: {
+    position: 'absolute',
+    top: '120%',
+    right: '-10px',
+    backgroundColor: '#1e293b',
+    border: '1px solid rgba(99, 102, 241, 0.3)',
+    borderRadius: '12px',
+    width: '320px',
+    maxHeight: '380px',
+    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.5)',
+    zIndex: 100,
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  notifHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.75rem 1rem',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(15, 23, 42, 0.5)'
+  },
+  markReadBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#818cf8',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem'
+  },
+  notifList: {
+    overflowY: 'auto',
+    maxHeight: '320px'
+  },
+  notifItem: {
+    padding: '0.75rem 1rem',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    cursor: 'pointer',
+    transition: 'background 0.2s ease'
   }
 };
 
 export default Header;
+

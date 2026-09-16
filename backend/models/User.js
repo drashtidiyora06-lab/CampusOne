@@ -8,17 +8,24 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ['student', 'faculty', 'club_admin', 'placement_admin'],
+      enum: ['student', 'faculty', 'admin', 'club_admin', 'placement_admin'],
       default: 'student'
     },
+    studentId: { type: String, sparse: true, trim: true },
+    facultyId: { type: String, sparse: true, trim: true },
+    adminId: { type: String, sparse: true, trim: true },
+    department: { type: String, default: 'Computer Science' },
     branch: { type: String, default: 'Computer Science' },
     year: { type: String, default: '3rd Year' },
     rollNumber: { type: String, default: 'CS2026-001' },
     avatarUrl: { type: String, default: '' },
-    bio: { type: String, default: 'CampusOne Member' }
+    bio: { type: String, default: 'CampusOne Member' },
+    isActive: { type: Boolean, default: true },
+    phone: { type: String, default: '' }
   },
   { timestamps: true }
 );
+
 
 // Encrypt password before saving
 UserSchema.pre('save', async function (next) {
