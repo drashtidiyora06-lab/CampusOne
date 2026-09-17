@@ -19,13 +19,13 @@ export const calculateSubjectPerformance = (marks, subjectType, hasPractical) =>
 
   if (subjectType === 'Major') {
     // Best of 3 ICAs
-    const validIcas = [ica1, ica2, ica3].filter((val) => val !== null);
+    const validIcas = [ica1, ica2, ica3].filter((val) => val !== null && !isNaN(val));
     if (validIcas.length > 0) {
       bestIcaOrMean = Math.max(...validIcas);
     }
   } else {
     // Minor: Mean of ICA 1 and ICA 2
-    const validIcas = [ica1, ica2].filter((val) => val !== null);
+    const validIcas = [ica1, ica2].filter((val) => val !== null && !isNaN(val));
     if (validIcas.length > 0) {
       const sum = validIcas.reduce((acc, curr) => acc + curr, 0);
       bestIcaOrMean = Math.round((sum / validIcas.length) * 10) / 10;
@@ -197,11 +197,11 @@ export const getSubjects = async (req, res) => {
 
 export const getTeachingAssignments = async (req, res) => {
   try {
-    const { teacherId, course, semester, division } = req.query;
+    const { teacherId, course, semester, division, all } = req.query;
     let filter = {};
 
-    // If logged in as teacher and not requesting all explicitly as admin, default filter to teacher
-    if (req.user && (req.user.role === 'faculty' || req.user.role === 'teacher') && !teacherId) {
+    // Teacher authorization: default to authenticated teacher unless explicitly requested by admin
+    if (req.user && (req.user.role === 'faculty' || req.user.role === 'teacher') && !all) {
       filter.teacher = req.user._id;
     } else if (teacherId) {
       filter.teacher = teacherId;
@@ -217,6 +217,23 @@ export const getTeachingAssignments = async (req, res) => {
       .sort({ course: 1, semester: 1, division: 1, subjectCode: 1 });
 
     res.json({ success: true, count: assignments.length, assignments });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getTeachingAssignmentById = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const assignment = await TeachingAssignment.findById(assignmentId)
+      .populate('teacher', 'name email facultyId department')
+      .populate('subject', 'name code type hasPractical credits');
+
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Teaching assignment not found' });
+    }
+
+    res.json({ success: true, assignment });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -247,20 +264,26 @@ export const getStudentsForAssignment = async (req, res) => {
       marksMap[m.student.toString()] = m;
     });
 
-    const studentList = students.map((s) => ({
-      _id: s._id,
-      studentId: s.studentId || `STU-${s._id.toString().slice(-4)}`,
-      name: s.name,
-      email: s.email,
-      rollNumber: s.rollNumber || 'N/A',
-      marks: marksMap[s._id.toString()] || {
-        ica1: null,
-        ica2: null,
-        ica3: null,
-        practical: null,
-        finalExam: null
-      }
-    }));
+    const studentList = students.map((s) => {
+      const m = marksMap[s._id.toString()] || {};
+      const perf = calculateSubjectPerformance(m, assignment.subject?.type || 'Major', assignment.subject?.hasPractical || false);
+
+      return {
+        _id: s._id,
+        studentId: s.studentId || `STU-${s._id.toString().slice(-4)}`,
+        name: s.name,
+        email: s.email,
+        rollNumber: s.rollNumber || 'N/A',
+        marks: {
+          ica1: m.ica1 !== undefined ? m.ica1 : null,
+          ica2: m.ica2 !== undefined ? m.ica2 : null,
+          ica3: m.ica3 !== undefined ? m.ica3 : null,
+          practical: m.practical !== undefined ? m.practical : null,
+          finalExam: m.finalExam !== undefined ? m.finalExam : null
+        },
+        calculated: perf
+      };
+    });
 
     res.json({
       success: true,
@@ -282,80 +305,131 @@ export const getStudentsForAssignment = async (req, res) => {
   }
 };
 
-export const saveBulkMarks = async (req, res) => {
+export const getMarksForAssignment = async (req, res) => {
   try {
-    const { assignmentId, assessmentComponent, studentMarks } = req.body;
-
-    if (!assignmentId || !assessmentComponent || !Array.isArray(studentMarks)) {
-      return res.status(400).json({ success: false, message: 'Invalid payload provided' });
-    }
-
+    const { assignmentId } = req.params;
     const assignment = await TeachingAssignment.findById(assignmentId);
     if (!assignment) {
       return res.status(404).json({ success: false, message: 'Teaching assignment not found' });
     }
 
-    // Teacher authorization check
+    const marks = await StudentMarks.find({ teachingAssignment: assignment._id }).populate('student', 'name email studentId rollNumber');
+    res.json({ success: true, count: marks.length, marks });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Comprehensive Bulk Marks Save/Update Handler
+export const saveBulkMarks = async (req, res) => {
+  try {
+    const { assignmentId, assessmentComponent, studentMarks, fullGrid } = req.body;
+
+    if (!assignmentId || !Array.isArray(studentMarks)) {
+      return res.status(400).json({ success: false, message: 'Invalid payload provided' });
+    }
+
+    const assignment = await TeachingAssignment.findById(assignmentId).populate('subject');
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Teaching assignment not found' });
+    }
+
+    // STRICT BACKEND AUTHORIZATION: Verify authenticated teacher owns this assignment
     if (req.user.role === 'faculty' || req.user.role === 'teacher') {
       if (assignment.teacher.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ success: false, message: 'Forbidden: You do not own this teaching assignment' });
+        return res.status(403).json({
+          success: false,
+          message: `Forbidden: You do not own TeachingAssignment (${assignment.teachingAssignmentId})`
+        });
       }
     }
-
-    const validComponents = ['ica1', 'ica2', 'ica3', 'practical', 'finalExam'];
-    if (!validComponents.includes(assessmentComponent)) {
-      return res.status(400).json({ success: false, message: 'Invalid assessment component' });
-    }
-
-    // Maximum mark limit check
-    let maxLimit = 25;
-    if (assessmentComponent === 'practical') maxLimit = 50;
-    if (assessmentComponent === 'finalExam') maxLimit = 75;
 
     let updatedCount = 0;
 
-    for (const item of studentMarks) {
-      const { studentId, mark } = item;
-      
-      let markVal = null;
-      if (mark !== '' && mark !== null && mark !== undefined) {
-        markVal = Number(mark);
-        if (isNaN(markVal) || markVal < 0 || markVal > maxLimit) {
-          return res.status(400).json({
-            success: false,
-            message: `Validation failed: Mark for student must be between 0 and ${maxLimit}`
-          });
-        }
-      }
+    if (fullGrid) {
+      // Save entire mark set per student ({ studentId, ica1, ica2, ica3, practical, finalExam })
+      for (const item of studentMarks) {
+        const { studentId, ica1, ica2, ica3, practical, finalExam } = item;
 
-      await StudentMarks.findOneAndUpdate(
-        {
-          student: studentId,
-          teachingAssignment: assignment._id
-        },
-        {
+        const parseVal = (val, max) => {
+          if (val === '' || val === null || val === undefined) return null;
+          const num = Number(val);
+          if (isNaN(num) || num < 0 || num > max) throw new Error(`Mark value (${val}) out of range (0-${max})`);
+          return num;
+        };
+
+        const updateData = {
           student: studentId,
           teachingAssignment: assignment._id,
           course: assignment.course,
           semester: assignment.semester,
           division: assignment.division,
-          subject: assignment.subject,
+          subject: assignment.subject._id || assignment.subject,
           teacher: assignment.teacher,
           academicYear: assignment.academicYear,
-          [assessmentComponent]: markVal
-        },
-        { upsert: true, new: true }
-      );
+          ica1: parseVal(ica1, 25),
+          ica2: parseVal(ica2, 25),
+          ica3: parseVal(ica3, 25),
+          practical: parseVal(practical, 50),
+          finalExam: parseVal(finalExam, 75)
+        };
 
-      updatedCount++;
+        await StudentMarks.findOneAndUpdate(
+          { student: studentId, teachingAssignment: assignment._id },
+          updateData,
+          { upsert: true, new: true }
+        );
+        updatedCount++;
+      }
+    } else {
+      // Save specific component tab (e.g. ica1, ica2, ica3, practical, finalExam)
+      const validComponents = ['ica1', 'ica2', 'ica3', 'practical', 'finalExam'];
+      if (!validComponents.includes(assessmentComponent)) {
+        return res.status(400).json({ success: false, message: 'Invalid assessment component' });
+      }
+
+      let maxLimit = 25;
+      if (assessmentComponent === 'practical') maxLimit = 50;
+      if (assessmentComponent === 'finalExam') maxLimit = 75;
+
+      for (const item of studentMarks) {
+        const { studentId, mark } = item;
+        let markVal = null;
+        if (mark !== '' && mark !== null && mark !== undefined) {
+          markVal = Number(mark);
+          if (isNaN(markVal) || markVal < 0 || markVal > maxLimit) {
+            return res.status(400).json({
+              success: false,
+              message: `Validation failed: Mark must be between 0 and ${maxLimit}`
+            });
+          }
+        }
+
+        await StudentMarks.findOneAndUpdate(
+          { student: studentId, teachingAssignment: assignment._id },
+          {
+            student: studentId,
+            teachingAssignment: assignment._id,
+            course: assignment.course,
+            semester: assignment.semester,
+            division: assignment.division,
+            subject: assignment.subject._id || assignment.subject,
+            teacher: assignment.teacher,
+            academicYear: assignment.academicYear,
+            [assessmentComponent]: markVal
+          },
+          { upsert: true, new: true }
+        );
+        updatedCount++;
+      }
     }
 
-    // Recalculate results for class in background / immediately
+    // Recalculate results for class in backend
     await recalculateClassResults(assignment.course, assignment.semester, assignment.division, assignment.academicYear);
 
     res.json({
       success: true,
-      message: `Successfully updated ${assessmentComponent} marks for ${updatedCount} students.`,
+      message: `Successfully saved marks for ${updatedCount} students. Database and calculated results updated!`,
       updatedCount
     });
   } catch (err) {

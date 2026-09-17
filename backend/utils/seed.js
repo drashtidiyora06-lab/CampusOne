@@ -139,7 +139,7 @@ export const seedDatabase = async () => {
       bio: 'Chief Placement Officer'
     });
 
-    // Students for BCOM Sem 3 Div A
+    // Students for BCOM Sem 3 Div A (5 Students)
     const bcomStudent1 = await User.create({
       name: 'Alex Johnson',
       email: 'student@college.edu',
@@ -168,11 +168,55 @@ export const seedDatabase = async () => {
       academicYear: '2026-27',
       branch: 'Commerce',
       year: '2nd Year',
-      rollNumber: 'BCOM26-A102',
-      bio: 'BCOM Sem 3 Div A Student'
+      rollNumber: 'BCOM26-A102'
     });
 
-    // Students for BSCIT Sem 3 Div B
+    const bcomStudent3 = await User.create({
+      name: 'Siddharth Rao',
+      email: 'siddharth.bcom@college.edu',
+      password: 'password123',
+      role: 'student',
+      studentId: 'STU-BCOM-103',
+      course: 'BCOM',
+      semester: 3,
+      division: 'A',
+      academicYear: '2026-27',
+      branch: 'Commerce',
+      year: '2nd Year',
+      rollNumber: 'BCOM26-A103'
+    });
+
+    const bcomStudent4 = await User.create({
+      name: 'Neha Sharma',
+      email: 'neha.bcom@college.edu',
+      password: 'password123',
+      role: 'student',
+      studentId: 'STU-BCOM-104',
+      course: 'BCOM',
+      semester: 3,
+      division: 'A',
+      academicYear: '2026-27',
+      branch: 'Commerce',
+      year: '2nd Year',
+      rollNumber: 'BCOM26-A104'
+    });
+
+    const bcomStudent5 = await User.create({
+      name: 'Aarav Gupta',
+      email: 'aarav.bcom@college.edu',
+      password: 'password123',
+      role: 'student',
+      studentId: 'STU-BCOM-105',
+      course: 'BCOM',
+      semester: 3,
+      division: 'A',
+      academicYear: '2026-27',
+      branch: 'Commerce',
+      year: '2nd Year',
+      rollNumber: 'BCOM26-A105'
+    });
+
+    // Students for BSCIT Sem 3 Div B (5 Students)
     const bscitStudent1 = await User.create({
       name: 'Priya Sharma',
       email: 'priya.bscit@college.edu',
@@ -201,8 +245,52 @@ export const seedDatabase = async () => {
       academicYear: '2026-27',
       branch: 'Information Technology',
       year: '2nd Year',
-      rollNumber: 'BSCIT26-B202',
-      bio: 'BSCIT Sem 3 Div B Student'
+      rollNumber: 'BSCIT26-B202'
+    });
+
+    const bscitStudent3 = await User.create({
+      name: 'Karan Verma',
+      email: 'karan.bscit@college.edu',
+      password: 'password123',
+      role: 'student',
+      studentId: 'STU-BSCIT-203',
+      course: 'BSCIT',
+      semester: 3,
+      division: 'B',
+      academicYear: '2026-27',
+      branch: 'Information Technology',
+      year: '2nd Year',
+      rollNumber: 'BSCIT26-B203'
+    });
+
+    const bscitStudent4 = await User.create({
+      name: 'Riya Singh',
+      email: 'riya.bscit@college.edu',
+      password: 'password123',
+      role: 'student',
+      studentId: 'STU-BSCIT-204',
+      course: 'BSCIT',
+      semester: 3,
+      division: 'B',
+      academicYear: '2026-27',
+      branch: 'Information Technology',
+      year: '2nd Year',
+      rollNumber: 'BSCIT26-B204'
+    });
+
+    const bscitStudent5 = await User.create({
+      name: 'Aditya Joshi',
+      email: 'aditya.bscit@college.edu',
+      password: 'password123',
+      role: 'student',
+      studentId: 'STU-BSCIT-205',
+      course: 'BSCIT',
+      semester: 3,
+      division: 'B',
+      academicYear: '2026-27',
+      branch: 'Information Technology',
+      year: '2nd Year',
+      rollNumber: 'BSCIT26-B205'
     });
 
     // Students for BMS, BAF, BMM
@@ -326,91 +414,77 @@ export const seedDatabase = async () => {
     });
 
     // 6. Seed Marks for TA-001 (BCOM Sem 3 Div A - Business Communication - Major: Best of 3 ICAs)
-    await StudentMarks.create({
-      student: bcomStudent1._id,
-      studentIdCode: bcomStudent1.studentId,
-      studentName: bcomStudent1.name,
-      teachingAssignment: ta1._id,
-      course: 'BCOM',
-      semester: 3,
-      division: 'A',
-      subject: subjMap['BCOM-BCOM-301']._id,
-      teacher: facultyUser._id,
-      academicYear: '2026-27',
-      ica1: 18,
-      ica2: 21,
-      ica3: 16,
-      finalExam: 62
-    });
+    const bcomStudents = [bcomStudent1, bcomStudent2, bcomStudent3, bcomStudent4, bcomStudent5];
+    const bcomMarksData = [
+      { ica1: 18, ica2: 21, ica3: 16, finalExam: 62 },
+      { ica1: 22, ica2: 19, ica3: 24, finalExam: 68 },
+      { ica1: 15, ica2: 17, ica3: 20, finalExam: 55 },
+      { ica1: 24, ica2: 25, ica3: 23, finalExam: 71 },
+      { ica1: 19, ica2: 18, ica3: 22, finalExam: 60 }
+    ];
 
-    await StudentMarks.create({
-      student: bcomStudent2._id,
-      studentIdCode: bcomStudent2.studentId,
-      studentName: bcomStudent2.name,
-      teachingAssignment: ta1._id,
-      course: 'BCOM',
-      semester: 3,
-      division: 'A',
-      subject: subjMap['BCOM-BCOM-301']._id,
-      teacher: facultyUser._id,
-      academicYear: '2026-27',
-      ica1: 22,
-      ica2: 19,
-      ica3: 24,
-      finalExam: 68
-    });
+    for (let i = 0; i < bcomStudents.length; i++) {
+      await StudentMarks.create({
+        student: bcomStudents[i]._id,
+        studentIdCode: bcomStudents[i].studentId,
+        studentName: bcomStudents[i].name,
+        teachingAssignment: ta1._id,
+        course: 'BCOM',
+        semester: 3,
+        division: 'A',
+        subject: subjMap['BCOM-BCOM-301']._id,
+        teacher: facultyUser._id,
+        academicYear: '2026-27',
+        ...bcomMarksData[i]
+      });
+    }
 
     // 7. Seed Marks for TA-002 (BSCIT Sem 3 Div B - Business Communication - Minor: Mean of 2 ICAs)
-    await StudentMarks.create({
-      student: bscitStudent1._id,
-      studentIdCode: bscitStudent1.studentId,
-      studentName: bscitStudent1.name,
-      teachingAssignment: ta2._id,
-      course: 'BSCIT',
-      semester: 3,
-      division: 'B',
-      subject: subjMap['BSCIT-BSCIT-301']._id,
-      teacher: facultyUser._id,
-      academicYear: '2026-27',
-      ica1: 18,
-      ica2: 22,
-      finalExam: 58
-    });
+    const bscitStudents = [bscitStudent1, bscitStudent2, bscitStudent3, bscitStudent4, bscitStudent5];
+    const bscitMarksData = [
+      { ica1: 18, ica2: 22, finalExam: 58 },
+      { ica1: 20, ica2: 24, finalExam: 64 },
+      { ica1: 16, ica2: 18, finalExam: 52 },
+      { ica1: 23, ica2: 25, finalExam: 72 },
+      { ica1: 19, ica2: 21, finalExam: 61 }
+    ];
 
-    await StudentMarks.create({
-      student: bscitStudent2._id,
-      studentIdCode: bscitStudent2.studentId,
-      studentName: bscitStudent2.name,
-      teachingAssignment: ta2._id,
-      course: 'BSCIT',
-      semester: 3,
-      division: 'B',
-      subject: subjMap['BSCIT-BSCIT-301']._id,
-      teacher: facultyUser._id,
-      academicYear: '2026-27',
-      ica1: 20,
-      ica2: 24,
-      finalExam: 64
-    });
+    for (let i = 0; i < bscitStudents.length; i++) {
+      await StudentMarks.create({
+        student: bscitStudents[i]._id,
+        studentIdCode: bscitStudents[i].studentId,
+        studentName: bscitStudents[i].name,
+        teachingAssignment: ta2._id,
+        course: 'BSCIT',
+        semester: 3,
+        division: 'B',
+        subject: subjMap['BSCIT-BSCIT-301']._id,
+        teacher: facultyUser._id,
+        academicYear: '2026-27',
+        ...bscitMarksData[i]
+      });
+    }
 
     // Seed Marks for TA-003 (BSCIT Sem 3 Div B - DBMS - Major + Practical)
-    await StudentMarks.create({
-      student: bscitStudent1._id,
-      studentIdCode: bscitStudent1.studentId,
-      studentName: bscitStudent1.name,
-      teachingAssignment: ta3._id,
-      course: 'BSCIT',
-      semester: 3,
-      division: 'B',
-      subject: subjMap['BSCIT-BSCIT-302']._id,
-      teacher: facultyUser._id,
-      academicYear: '2026-27',
-      ica1: 22,
-      ica2: 24,
-      ica3: 20,
-      practical: 44,
-      finalExam: 65
-    });
+    for (let i = 0; i < bscitStudents.length; i++) {
+      await StudentMarks.create({
+        student: bscitStudents[i]._id,
+        studentIdCode: bscitStudents[i].studentId,
+        studentName: bscitStudents[i].name,
+        teachingAssignment: ta3._id,
+        course: 'BSCIT',
+        semester: 3,
+        division: 'B',
+        subject: subjMap['BSCIT-BSCIT-302']._id,
+        teacher: facultyUser._id,
+        academicYear: '2026-27',
+        ica1: 20 + i,
+        ica2: 22 + i,
+        ica3: 21 + i,
+        practical: 40 + i * 2,
+        finalExam: 60 + i * 2
+      });
+    }
 
     // Calculate initial class results
     await recalculateClassResults('BCOM', 3, 'A', '2026-27');

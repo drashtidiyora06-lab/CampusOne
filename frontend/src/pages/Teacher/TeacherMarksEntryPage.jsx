@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -12,21 +13,32 @@ import {
   Sparkles,
   Info,
   Check,
-  RefreshCw
+  RefreshCw,
+  Grid,
+  ListFilter
 } from 'lucide-react';
 
 export default function TeacherMarksEntryPage() {
   const { user } = useAuth();
+  const location = useLocation();
+
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState('');
   const [assignmentDetails, setAssignmentDetails] = useState(null);
   const [students, setStudents] = useState([]);
+  const [viewMode, setViewMode] = useState('full_grid'); // 'full_grid' or 'single_component'
   const [component, setComponent] = useState('ica1');
-  const [marksState, setMarksState] = useState({});
+
+  // Full Grid State: { [studentId]: { ica1, ica2, ica3, practical, finalExam } }
+  const [gridState, setGridState] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [validationError, setValidationError] = useState('');
+
+  // Extract URL search param query `assignmentId`
+  const queryParams = new URLSearchParams(location.search);
+  const initialAssignmentId = queryParams.get('assignmentId');
 
   // Fetch teaching assignments for teacher
   useEffect(() => {
@@ -36,7 +48,9 @@ export default function TeacherMarksEntryPage() {
         const res = await api.get('/v3/academics/teaching-assignments');
         if (res.data.success && res.data.assignments) {
           setAssignments(res.data.assignments);
-          if (res.data.assignments.length > 0) {
+          if (initialAssignmentId && res.data.assignments.some(a => a._id === initialAssignmentId)) {
+            setSelectedAssignmentId(initialAssignmentId);
+          } else if (res.data.assignments.length > 0) {
             setSelectedAssignmentId(res.data.assignments[0]._id);
           }
         }
@@ -49,7 +63,7 @@ export default function TeacherMarksEntryPage() {
     };
 
     fetchAssignments();
-  }, [user]);
+  }, [user, initialAssignmentId]);
 
   // Fetch students & marks when selected assignment changes
   useEffect(() => {
@@ -64,12 +78,18 @@ export default function TeacherMarksEntryPage() {
           setAssignmentDetails(res.data.assignment);
           setStudents(res.data.students);
 
-          // Populate local state for marks
-          const initialMarks = {};
+          // Populate local full grid state for marks
+          const initialGrid = {};
           res.data.students.forEach((s) => {
-            initialMarks[s._id] = s.marks[component] !== null && s.marks[component] !== undefined ? s.marks[component] : '';
+            initialGrid[s._id] = {
+              ica1: s.marks?.ica1 !== null && s.marks?.ica1 !== undefined ? s.marks.ica1 : '',
+              ica2: s.marks?.ica2 !== null && s.marks?.ica2 !== undefined ? s.marks.ica2 : '',
+              ica3: s.marks?.ica3 !== null && s.marks?.ica3 !== undefined ? s.marks.ica3 : '',
+              practical: s.marks?.practical !== null && s.marks?.practical !== undefined ? s.marks.practical : '',
+              finalExam: s.marks?.finalExam !== null && s.marks?.finalExam !== undefined ? s.marks.finalExam : ''
+            };
           });
-          setMarksState(initialMarks);
+          setGridState(initialGrid);
         }
       } catch (err) {
         console.error('Error fetching student class list:', err);
@@ -82,55 +102,101 @@ export default function TeacherMarksEntryPage() {
     fetchClassData();
   }, [selectedAssignmentId]);
 
-  // Update marksState when active assessment component tab changes
-  useEffect(() => {
-    if (!students || students.length === 0) return;
-    const updated = {};
-    students.forEach((s) => {
-      updated[s._id] = s.marks[component] !== null && s.marks[component] !== undefined ? s.marks[component] : '';
-    });
-    setMarksState(updated);
-    setValidationError('');
-  }, [component, students]);
-
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
-  const handleMarkChange = (studentId, val) => {
+  const handleGridCellChange = (studentId, field, val) => {
     setValidationError('');
-    setMarksState((prev) => ({
+    setGridState((prev) => ({
       ...prev,
-      [studentId]: val
+      [studentId]: {
+        ...prev[studentId],
+        [field]: val
+      }
     }));
   };
 
-  const getMaxMarkLimit = () => {
-    if (component === 'practical') return 50;
-    if (component === 'finalExam') return 75;
-    return 25; // ICAs max 25
+  const subjectType = assignmentDetails?.subject?.type || 'Major';
+  const hasPractical = assignmentDetails?.subject?.hasPractical || false;
+
+  // Client-side helper for dynamic calculation preview
+  const computePreview = (stId) => {
+    const row = gridState[stId] || {};
+    const i1 = row.ica1 !== '' && row.ica1 !== null ? Number(row.ica1) : null;
+    const i2 = row.ica2 !== '' && row.ica2 !== null ? Number(row.ica2) : null;
+    const i3 = row.ica3 !== '' && row.ica3 !== null ? Number(row.ica3) : null;
+    const pr = row.practical !== '' && row.practical !== null ? Number(row.practical) : null;
+    const fe = row.finalExam !== '' && row.finalExam !== null ? Number(row.finalExam) : null;
+
+    let bestOrMean = 0;
+    if (subjectType === 'Major') {
+      const valid = [i1, i2, i3].filter((x) => x !== null && !isNaN(x));
+      if (valid.length > 0) bestOrMean = Math.max(...valid);
+    } else {
+      const valid = [i1, i2].filter((x) => x !== null && !isNaN(x));
+      if (valid.length > 0) bestOrMean = Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10;
+    }
+
+    let maxTot = 100;
+    let obt = bestOrMean + (fe || 0);
+    if (hasPractical) {
+      maxTot += 50;
+      obt += (pr || 0);
+    }
+
+    const pct = Math.round((obt / maxTot) * 100 * 10) / 10;
+    let grade = 'F';
+    if (pct >= 85) grade = 'O';
+    else if (pct >= 75) grade = 'A+';
+    else if (pct >= 65) grade = 'A';
+    else if (pct >= 55) grade = 'B+';
+    else if (pct >= 50) grade = 'B';
+    else if (pct >= 45) grade = 'C';
+    else if (pct >= 40) grade = 'D';
+
+    return { bestOrMean, obt, maxTot, pct, grade };
   };
 
-  const handleSaveMarks = async () => {
-    const maxLimit = getMaxMarkLimit();
+  const handleSaveFullGrid = async () => {
     setValidationError('');
-
-    // Client-side validation
     const payloadMarks = [];
+
+    // Validation
     for (const s of students) {
-      const val = marksState[s._id];
-      if (val !== '' && val !== null && val !== undefined) {
-        const num = Number(val);
-        if (isNaN(num) || num < 0 || num > maxLimit) {
-          const err = `Invalid Mark for ${s.name} (${val}). Must be between 0 and ${maxLimit}.`;
-          setValidationError(err);
-          showToast(err, 'error');
-          return;
+      const row = gridState[s._id] || {};
+      const validateField = (field, name, max) => {
+        const val = row[field];
+        if (val !== '' && val !== null && val !== undefined) {
+          const num = Number(val);
+          if (isNaN(num) || num < 0 || num > max) {
+            throw new Error(`Invalid ${name} for ${s.name} (${val}). Must be between 0 and ${max}.`);
+          }
+          return num;
         }
-        payloadMarks.push({ studentId: s._id, mark: num });
-      } else {
-        payloadMarks.push({ studentId: s._id, mark: null });
+        return null;
+      };
+
+      try {
+        const ica1 = validateField('ica1', 'ICA 1', 25);
+        const ica2 = validateField('ica2', 'ICA 2', 25);
+        const ica3 = validateField('ica3', 'ICA 3', 25);
+        const practical = validateField('practical', 'Practical', 50);
+        const finalExam = validateField('finalExam', 'Final Exam', 75);
+
+        payloadMarks.push({
+          studentId: s._id,
+          ica1,
+          ica2,
+          ica3,
+          practical,
+          finalExam
+        });
+      } catch (err) {
+        setValidationError(err.message);
+        showToast(err.message, 'error');
+        return;
       }
     }
 
@@ -138,13 +204,13 @@ export default function TeacherMarksEntryPage() {
       setSaving(true);
       const res = await api.post('/v3/academics/marks/bulk', {
         assignmentId: selectedAssignmentId,
-        assessmentComponent: component,
+        fullGrid: true,
         studentMarks: payloadMarks
       });
 
       if (res.data.success) {
-        showToast(res.data.message || 'Marks saved and results updated successfully!');
-        // Refresh local student data
+        showToast(res.data.message || 'Marks saved to database successfully!');
+        // Refresh local student list from database
         const refRes = await api.get(`/v3/academics/teaching-assignments/${selectedAssignmentId}/students`);
         if (refRes.data.success) {
           setStudents(refRes.data.students);
@@ -157,9 +223,6 @@ export default function TeacherMarksEntryPage() {
       setSaving(false);
     }
   };
-
-  const subjectType = assignmentDetails?.subject?.type || 'Major';
-  const hasPractical = assignmentDetails?.subject?.hasPractical || false;
 
   return (
     <div style={styles.container}>
@@ -175,11 +238,11 @@ export default function TeacherMarksEntryPage() {
       <div style={styles.header}>
         <div>
           <div style={styles.badge}>
-            <Award size={14} /> CAMPUSONE V3 EXAMINATION SYSTEM
+            <Award size={14} /> CAMPUSONE V3 EXAMINATION ENGINE
           </div>
-          <h1 style={styles.title}>Teacher Marks Entry & Assessment Management</h1>
+          <h1 style={styles.title}>Teacher Class Marks & Assessment Console</h1>
           <p style={styles.subtitle}>
-            Enter, validate, and compute official assessment components with strict academic context isolation.
+            Enter, edit, and persist class assessment marks directly to the database with automatic calculation of Best-of-3 / Mean ICAs.
           </p>
         </div>
       </div>
@@ -188,7 +251,7 @@ export default function TeacherMarksEntryPage() {
       <div style={styles.selectorCard}>
         <div style={styles.selectorGroup}>
           <label style={styles.label}>
-            <BookOpen size={16} color="#818cf8" /> Select Teaching Assignment:
+            <BookOpen size={16} color="#818cf8" /> Select Teaching Assignment (Academic Context):
           </label>
           <select
             style={styles.select}
@@ -197,7 +260,7 @@ export default function TeacherMarksEntryPage() {
           >
             {assignments.map((ta) => (
               <option key={ta._id} value={ta._id}>
-                {ta.course} / Sem {ta.semester} / Div {ta.division} — {ta.subjectCode}: {ta.subjectName} ({ta.subjectType || 'Major'})
+                {ta.course} / Sem {ta.semester} / Div {ta.division} — {ta.subjectCode}: {ta.subjectName || ta.subject?.name} ({ta.subjectType || 'Major'})
               </option>
             ))}
           </select>
@@ -240,53 +303,22 @@ export default function TeacherMarksEntryPage() {
         </div>
       )}
 
-      {/* Assessment Component Tabs */}
-      <div style={styles.tabsRow}>
-        <button
-          style={{ ...styles.tabBtn, ...(component === 'ica1' ? styles.tabBtnActive : {}) }}
-          onClick={() => setComponent('ica1')}
-        >
-          ICA 1 (25 Marks)
-        </button>
-        <button
-          style={{ ...styles.tabBtn, ...(component === 'ica2' ? styles.tabBtnActive : {}) }}
-          onClick={() => setComponent('ica2')}
-        >
-          ICA 2 (25 Marks)
-        </button>
-
-        {subjectType === 'Major' ? (
+      {/* View Mode Toggle Bar */}
+      <div style={styles.viewToggleRow}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            style={{ ...styles.tabBtn, ...(component === 'ica3' ? styles.tabBtnActive : {}) }}
-            onClick={() => setComponent('ica3')}
+            style={{ ...styles.viewBtn, ...(viewMode === 'full_grid' ? styles.viewBtnActive : {}) }}
+            onClick={() => setViewMode('full_grid')}
           >
-            ICA 3 (25 Marks)
+            <Grid size={15} /> Full Marksheet View (All Components)
           </button>
-        ) : (
-          <button style={{ ...styles.tabBtn, opacity: 0.4, cursor: 'not-allowed' }} title="Minor subjects use 2 ICAs">
-            ICA 3 (Disabled - Minor Subject)
-          </button>
-        )}
-
-        {hasPractical ? (
           <button
-            style={{ ...styles.tabBtn, ...(component === 'practical' ? styles.tabBtnActive : {}) }}
-            onClick={() => setComponent('practical')}
+            style={{ ...styles.viewBtn, ...(viewMode === 'single_component' ? styles.viewBtnActive : {}) }}
+            onClick={() => setViewMode('single_component')}
           >
-            Practical Exam (50 Marks)
+            <ListFilter size={15} /> Single Component View
           </button>
-        ) : (
-          <button style={{ ...styles.tabBtn, opacity: 0.4, cursor: 'not-allowed' }} title="Practical not applicable for this subject">
-            Practical (N/A)
-          </button>
-        )}
-
-        <button
-          style={{ ...styles.tabBtn, ...(component === 'finalExam' ? styles.tabBtnActive : {}) }}
-          onClick={() => setComponent('finalExam')}
-        >
-          Final Semester Exam (75 Marks)
-        </button>
+        </div>
       </div>
 
       {/* Validation Warning */}
@@ -297,77 +329,235 @@ export default function TeacherMarksEntryPage() {
         </div>
       )}
 
-      {/* Student List Table */}
-      <div style={styles.tableCard}>
-        <div style={styles.tableHeader}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Users size={18} color="#818cf8" />
-            <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, color: '#f8fafc' }}>
-              Class Student Roll ({students.length} Enrolled Students)
-            </h2>
+      {/* FULL MARKSHEET GRID VIEW */}
+      {viewMode === 'full_grid' ? (
+        <div style={styles.tableCard}>
+          <div style={styles.tableHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Users size={18} color="#818cf8" />
+              <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, color: '#f8fafc' }}>
+                Enrolled Students Marksheet ({students.length} Students)
+              </h2>
+            </div>
+            <button
+              style={styles.saveBtn}
+              onClick={handleSaveFullGrid}
+              disabled={saving || loading}
+            >
+              {saving ? <RefreshCw size={16} className="spin" /> : <Save size={16} />}
+              {saving ? 'Saving to Database...' : 'Save All Marks to Database'}
+            </button>
           </div>
-          <button
-            style={styles.saveBtn}
-            onClick={handleSaveMarks}
-            disabled={saving || loading}
-          >
-            {saving ? <RefreshCw size={16} className="spin" /> : <Save size={16} />}
-            {saving ? 'Saving & Calculating...' : `Save ${component.toUpperCase()} Marks`}
-          </button>
-        </div>
 
-        {loading ? (
-          <div style={styles.loadingBox}>Loading class list for selected assignment...</div>
-        ) : students.length === 0 ? (
-          <div style={styles.emptyBox}>No students found enrolled in this specific academic context.</div>
-        ) : (
+          {loading ? (
+            <div style={styles.loadingBox}>Fetching student class list and database records...</div>
+          ) : students.length === 0 ? (
+            <div style={styles.emptyBox}>No students enrolled in this specific academic context.</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Roll No</th>
+                    <th style={styles.th}>Student Name</th>
+                    <th style={styles.th}>ICA 1 (25)</th>
+                    <th style={styles.th}>ICA 2 (25)</th>
+                    <th style={styles.th}>ICA 3 (25)</th>
+                    <th style={styles.thHighlightHeader}>
+                      {subjectType === 'Major' ? 'Best ICA' : 'ICA Mean'}
+                    </th>
+                    <th style={styles.th}>Practical (50)</th>
+                    <th style={styles.th}>Semester Exam (75)</th>
+                    <th style={styles.th}>Total (Obtd/Max)</th>
+                    <th style={styles.th}>Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((st) => {
+                    const row = gridState[st._id] || {};
+                    const calc = computePreview(st._id);
+
+                    return (
+                      <tr key={st._id} style={styles.tr}>
+                        <td style={styles.tdBold}>{st.rollNumber}</td>
+                        <td style={styles.tdName}>{st.name}</td>
+
+                        {/* ICA 1 */}
+                        <td style={styles.td}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="25"
+                            step="0.5"
+                            style={styles.cellInput}
+                            placeholder="0-25"
+                            value={row.ica1}
+                            onChange={(e) => handleGridCellChange(st._id, 'ica1', e.target.value)}
+                          />
+                        </td>
+
+                        {/* ICA 2 */}
+                        <td style={styles.td}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="25"
+                            step="0.5"
+                            style={styles.cellInput}
+                            placeholder="0-25"
+                            value={row.ica2}
+                            onChange={(e) => handleGridCellChange(st._id, 'ica2', e.target.value)}
+                          />
+                        </td>
+
+                        {/* ICA 3 */}
+                        <td style={styles.td}>
+                          {subjectType === 'Major' ? (
+                            <input
+                              type="number"
+                              min="0"
+                              max="25"
+                              step="0.5"
+                              style={styles.cellInput}
+                              placeholder="0-25"
+                              value={row.ica3}
+                              onChange={(e) => handleGridCellChange(st._id, 'ica3', e.target.value)}
+                            />
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>N/A</span>
+                          )}
+                        </td>
+
+                        {/* Computed Best ICA or Mean */}
+                        <td style={styles.tdHighlight}>{calc.bestOrMean}</td>
+
+                        {/* Practical */}
+                        <td style={styles.td}>
+                          {hasPractical ? (
+                            <input
+                              type="number"
+                              min="0"
+                              max="50"
+                              step="0.5"
+                              style={styles.cellInput}
+                              placeholder="0-50"
+                              value={row.practical}
+                              onChange={(e) => handleGridCellChange(st._id, 'practical', e.target.value)}
+                            />
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>N/A</span>
+                          )}
+                        </td>
+
+                        {/* Semester Exam */}
+                        <td style={styles.td}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="75"
+                            step="0.5"
+                            style={styles.cellInput}
+                            placeholder="0-75"
+                            value={row.finalExam}
+                            onChange={(e) => handleGridCellChange(st._id, 'finalExam', e.target.value)}
+                          />
+                        </td>
+
+                        {/* Total Marks */}
+                        <td style={styles.tdBold}>
+                          {calc.obt} / {calc.maxTot}
+                        </td>
+
+                        {/* Calculated Grade */}
+                        <td style={styles.td}>
+                          <span style={styles.gradeBadge}>{calc.grade}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* SINGLE COMPONENT TAB VIEW */
+        <div style={styles.tableCard}>
+          <div style={styles.componentTabHeader}>
+            <div style={styles.tabsRow}>
+              <button
+                style={{ ...styles.tabBtn, ...(component === 'ica1' ? styles.tabBtnActive : {}) }}
+                onClick={() => setComponent('ica1')}
+              >
+                ICA 1 (25 Marks)
+              </button>
+              <button
+                style={{ ...styles.tabBtn, ...(component === 'ica2' ? styles.tabBtnActive : {}) }}
+                onClick={() => setComponent('ica2')}
+              >
+                ICA 2 (25 Marks)
+              </button>
+              {subjectType === 'Major' && (
+                <button
+                  style={{ ...styles.tabBtn, ...(component === 'ica3' ? styles.tabBtnActive : {}) }}
+                  onClick={() => setComponent('ica3')}
+                >
+                  ICA 3 (25 Marks)
+                </button>
+              )}
+              {hasPractical && (
+                <button
+                  style={{ ...styles.tabBtn, ...(component === 'practical' ? styles.tabBtnActive : {}) }}
+                  onClick={() => setComponent('practical')}
+                >
+                  Practical (50 Marks)
+                </button>
+              )}
+              <button
+                style={{ ...styles.tabBtn, ...(component === 'finalExam' ? styles.tabBtnActive : {}) }}
+                onClick={() => setComponent('finalExam')}
+              >
+                Final Exam (75 Marks)
+              </button>
+            </div>
+            <button style={styles.saveBtn} onClick={handleSaveFullGrid} disabled={saving}>
+              {saving ? <RefreshCw size={16} className="spin" /> : <Save size={16} />}
+              Save Changes
+            </button>
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table style={styles.table}>
               <thead>
                 <tr>
                   <th style={styles.th}>Roll No</th>
-                  <th style={styles.th}>Student ID</th>
                   <th style={styles.th}>Student Name</th>
-                  <th style={styles.th}>Course Context</th>
-                  <th style={styles.th}>Marks Obtained (Max {getMaxMarkLimit()})</th>
+                  <th style={styles.th}>Score Input</th>
                   <th style={styles.th}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {students.map((st) => {
-                  const currentVal = marksState[st._id] !== undefined ? marksState[st._id] : '';
-                  const numVal = Number(currentVal);
-                  const isInvalid = currentVal !== '' && (isNaN(numVal) || numVal < 0 || numVal > getMaxMarkLimit());
-
+                  const row = gridState[st._id] || {};
+                  const val = row[component] !== undefined ? row[component] : '';
                   return (
                     <tr key={st._id} style={styles.tr}>
                       <td style={styles.tdBold}>{st.rollNumber}</td>
-                      <td style={styles.tdCode}>{st.studentId}</td>
                       <td style={styles.tdName}>{st.name}</td>
-                      <td style={styles.tdContext}>{assignmentDetails?.course} Sem {assignmentDetails?.semester} Div {assignmentDetails?.division}</td>
                       <td style={styles.td}>
                         <input
                           type="number"
-                          min="0"
-                          max={getMaxMarkLimit()}
                           step="0.5"
-                          style={{
-                            ...styles.input,
-                            borderColor: isInvalid ? '#ef4444' : 'rgba(255,255,255,0.15)',
-                            backgroundColor: isInvalid ? 'rgba(239,68,68,0.1)' : '#0f172a'
-                          }}
-                          placeholder={`0 - ${getMaxMarkLimit()}`}
-                          value={currentVal}
-                          onChange={(e) => handleMarkChange(st._id, e.target.value)}
+                          style={styles.cellInput}
+                          value={val}
+                          onChange={(e) => handleGridCellChange(st._id, component, e.target.value)}
                         />
                       </td>
                       <td style={styles.td}>
-                        {isInvalid ? (
-                          <span style={styles.badgeError}>Out of range</span>
-                        ) : currentVal !== '' ? (
-                          <span style={styles.badgeSuccess}><Check size={12} /> Entered</span>
+                        {val !== '' ? (
+                          <span style={styles.badgeSuccess}><Check size={12} /> Saved</span>
                         ) : (
-                          <span style={styles.badgePending}>Pending</span>
+                          <span style={styles.badgePending}>Empty</span>
                         )}
                       </td>
                     </tr>
@@ -376,8 +566,8 @@ export default function TeacherMarksEntryPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -492,30 +682,30 @@ const styles = {
     color: '#818cf8',
     marginTop: '0.15rem'
   },
-  tabsRow: {
+  viewToggleRow: {
     display: 'flex',
-    gap: '0.5rem',
-    overflowX: 'auto',
-    marginBottom: '1.25rem',
-    paddingBottom: '0.5rem'
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.25rem'
   },
-  tabBtn: {
-    padding: '0.75rem 1.25rem',
-    borderRadius: '10px',
+  viewBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.4rem',
+    padding: '0.65rem 1.1rem',
+    borderRadius: '8px',
     backgroundColor: '#1e293b',
     border: '1px solid rgba(255,255,255,0.08)',
     color: '#94a3b8',
+    fontSize: '0.85rem',
     fontWeight: 600,
-    fontSize: '0.88rem',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    transition: 'all 0.2s ease'
+    cursor: 'pointer'
   },
-  tabBtnActive: {
+  viewBtnActive: {
     backgroundColor: '#6366f1',
     color: '#ffffff',
     borderColor: '#818cf8',
-    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+    fontWeight: 700
   },
   errorBox: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
@@ -545,6 +735,35 @@ const styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: '1rem'
+  },
+  componentTabHeader: {
+    padding: '1rem 1.25rem',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '1rem'
+  },
+  tabsRow: {
+    display: 'flex',
+    gap: '0.5rem',
+    flexWrap: 'wrap'
+  },
+  tabBtn: {
+    padding: '0.5rem 1rem',
+    borderRadius: '8px',
+    backgroundColor: '#0f172a',
+    border: '1px solid rgba(255,255,255,0.08)',
+    color: '#94a3b8',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer'
+  },
+  tabBtnActive: {
+    backgroundColor: '#6366f1',
+    color: '#ffffff',
+    borderColor: '#818cf8'
   },
   saveBtn: {
     display: 'inline-flex',
@@ -577,11 +796,21 @@ const styles = {
     textAlign: 'left'
   },
   th: {
-    padding: '1rem 1.25rem',
+    padding: '1rem 1rem',
     backgroundColor: '#0f172a',
     color: '#94a3b8',
-    fontSize: '0.8rem',
+    fontSize: '0.78rem',
     fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    borderBottom: '1px solid rgba(255,255,255,0.08)'
+  },
+  thHighlightHeader: {
+    padding: '1rem 1rem',
+    backgroundColor: '#0f172a',
+    color: '#34d399',
+    fontSize: '0.78rem',
+    fontWeight: 800,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     borderBottom: '1px solid rgba(255,255,255,0.08)'
@@ -590,39 +819,43 @@ const styles = {
     borderBottom: '1px solid rgba(255,255,255,0.05)'
   },
   tdBold: {
-    padding: '1rem 1.25rem',
+    padding: '0.85rem 1rem',
     fontWeight: 700,
     color: '#ffffff'
   },
-  tdCode: {
-    padding: '1rem 1.25rem',
-    fontFamily: 'monospace',
-    color: '#818cf8',
-    fontSize: '0.85rem'
-  },
   tdName: {
-    padding: '1rem 1.25rem',
+    padding: '0.85rem 1rem',
     fontWeight: 600,
     color: '#f1f5f9'
   },
-  tdContext: {
-    padding: '1rem 1.25rem',
-    fontSize: '0.82rem',
-    color: '#94a3b8'
-  },
   td: {
-    padding: '1rem 1.25rem'
+    padding: '0.85rem 1rem'
   },
-  input: {
-    width: '120px',
-    padding: '0.5rem 0.75rem',
+  tdHighlight: {
+    padding: '0.85rem 1rem',
+    fontWeight: 800,
+    color: '#34d399',
+    fontSize: '0.95rem'
+  },
+  cellInput: {
+    width: '90px',
+    padding: '0.45rem 0.6rem',
     borderRadius: '8px',
     backgroundColor: '#0f172a',
     border: '1px solid rgba(255,255,255,0.15)',
     color: '#ffffff',
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     fontWeight: 700,
     outline: 'none'
+  },
+  gradeBadge: {
+    display: 'inline-block',
+    padding: '0.2rem 0.6rem',
+    borderRadius: '6px',
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    color: '#818cf8',
+    fontWeight: 800,
+    fontSize: '0.85rem'
   },
   badgeSuccess: {
     display: 'inline-flex',
@@ -642,13 +875,5 @@ const styles = {
     padding: '0.25rem 0.6rem',
     borderRadius: '9999px',
     fontWeight: 600
-  },
-  badgeError: {
-    fontSize: '0.75rem',
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    color: '#fca5a5',
-    padding: '0.25rem 0.6rem',
-    borderRadius: '9999px',
-    fontWeight: 700
   }
 };

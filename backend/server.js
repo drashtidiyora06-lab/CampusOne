@@ -61,8 +61,13 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+import { getStudentResults } from './controllers/academicCoreController.js';
+import { protect } from './middleware/auth.js';
+
 // CampusOne V3 Routes
 app.use('/api/v3/academics', v3AcademicRoutes);
+app.get('/api/student/results', protect, getStudentResults);
+
 
 
 

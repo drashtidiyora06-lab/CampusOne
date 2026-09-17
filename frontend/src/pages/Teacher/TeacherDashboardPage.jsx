@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import {
   BookOpen,
@@ -11,16 +12,22 @@ import {
   Plus,
   Clock,
   UserCheck,
-  CheckCircle
+  CheckCircle,
+  Layers,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 
 const TeacherDashboardPage = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('submissions');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('assignments_v3');
   const [stats, setStats] = useState({ totalAssignments: 0, totalResources: 0, totalCourses: 0, totalSubmissions: 0 });
   const [assignments, setAssignments] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [teachingAssignments, setTeachingAssignments] = useState([]);
 
   // Modals
   const [showCreateAssignmentModal, setShowCreateAssignmentModal] = useState(false);
@@ -29,18 +36,18 @@ const TeacherDashboardPage = () => {
 
   // Form states
   const [newAssignment, setNewAssignment] = useState({ title: '', subject: 'Database Management Systems', dueDate: '', maxMarks: 100, description: '' });
-  const [newResource, setNewResource] = useState({ title: '', subject: 'Database Management Systems', semester: 'Semester 6', category: 'Lecture Notes', fileUrl: '' });
   const [gradeData, setGradeData] = useState({ grade: 'A+', feedback: 'Excellent submission!' });
 
   useEffect(() => {
     fetchTeacherData();
-  }, []);
+  }, [user]);
 
   const fetchTeacherData = async () => {
     try {
-      const [dashRes, subRes] = await Promise.all([
+      const [dashRes, subRes, taRes] = await Promise.all([
         api.get('/teacher/dashboard'),
-        api.get('/teacher/submissions')
+        api.get('/teacher/submissions'),
+        api.get('/v3/academics/teaching-assignments')
       ]);
 
       if (dashRes.data.success) {
@@ -51,8 +58,11 @@ const TeacherDashboardPage = () => {
       if (subRes.data.success) {
         setSubmissions(subRes.data.submissions);
       }
+      if (taRes.data.success) {
+        setTeachingAssignments(taRes.data.assignments || []);
+      }
     } catch (err) {
-      console.warn('Teacher data fetch error');
+      console.warn('Teacher data fetch error', err);
     }
   };
 
@@ -67,20 +77,6 @@ const TeacherDashboardPage = () => {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating assignment');
-    }
-  };
-
-  const handleUploadResource = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.post('/resources', newResource);
-      if (res.data.success) {
-        setShowUploadResourceModal(false);
-        setNewResource({ title: '', subject: 'Database Management Systems', semester: 'Semester 6', category: 'Lecture Notes', fileUrl: '' });
-        fetchTeacherData();
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error uploading resource');
     }
   };
 
@@ -108,18 +104,18 @@ const TeacherDashboardPage = () => {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Faculty Portal & Workspace</h1>
+          <h1 className="page-title">Faculty Portal & Academic Workspace</h1>
           <p className="page-subtitle">
-            Welcome, <strong>{user?.name || 'Dr. Vikram Seth'}</strong> ({user?.facultyId || 'FAC-CS-022'}) • {user?.branch || 'Computer Science'} Department
+            Welcome, <strong>{user?.name || 'Dr. Vikram Seth'}</strong> ({user?.facultyId || 'FAC-CS-022'}) • {user?.department || user?.branch || 'Computer Science & Commerce'} Department
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button className="btn-primary" onClick={() => setShowCreateAssignmentModal(true)}>
-            <Plus size={16} /> Post Assignment
+          <button className="btn-primary" onClick={() => navigate('/teacher/marks')}>
+            <Award size={16} /> Marks Entry Console
           </button>
-          <button className="btn-secondary" onClick={() => setShowUploadResourceModal(true)}>
-            <Upload size={16} /> Upload Notes
+          <button className="btn-secondary" onClick={() => setShowCreateAssignmentModal(true)}>
+            <Plus size={16} /> Post Course Assignment
           </button>
         </div>
       </div>
@@ -128,11 +124,11 @@ const TeacherDashboardPage = () => {
       <div style={styles.statsRow}>
         <div style={styles.statCard}>
           <div style={styles.statIconBox}>
-            <FileText size={22} color="#818cf8" />
+            <Layers size={22} color="#818cf8" />
           </div>
           <div>
-            <div style={styles.statVal}>{stats.totalAssignments}</div>
-            <div style={styles.statLabel}>Active Course Assignments</div>
+            <div style={styles.statVal}>{teachingAssignments.length}</div>
+            <div style={styles.statLabel}>My Teaching Assignments</div>
           </div>
         </div>
 
@@ -151,7 +147,7 @@ const TeacherDashboardPage = () => {
             <BookOpen size={22} color="#fbbf24" />
           </div>
           <div>
-            <div style={styles.statVal}>{stats.totalCourses}</div>
+            <div style={styles.statVal}>{stats.totalCourses || 4}</div>
             <div style={styles.statLabel}>Assigned Subjects</div>
           </div>
         </div>
@@ -159,6 +155,12 @@ const TeacherDashboardPage = () => {
 
       {/* Tabs */}
       <div style={styles.tabBar}>
+        <button
+          style={{ ...styles.tabBtn, ...(activeTab === 'assignments_v3' ? styles.tabBtnActive : {}) }}
+          onClick={() => setActiveTab('assignments_v3')}
+        >
+          <Layers size={16} /> My Teaching Assignments ({teachingAssignments.length})
+        </button>
         <button
           style={{ ...styles.tabBtn, ...(activeTab === 'submissions' ? styles.tabBtnActive : {}) }}
           onClick={() => setActiveTab('submissions')}
@@ -171,13 +173,67 @@ const TeacherDashboardPage = () => {
         >
           <FileText size={16} /> Course Assignments
         </button>
-        <button
-          style={{ ...styles.tabBtn, ...(activeTab === 'courses' ? styles.tabBtnActive : {}) }}
-          onClick={() => setActiveTab('courses')}
-        >
-          <BookOpen size={16} /> Assigned Subjects
-        </button>
       </div>
+
+      {/* TAB 0: V3 TEACHING ASSIGNMENTS (MY TEACHING ASSIGNMENTS) */}
+      {activeTab === 'assignments_v3' && (
+        <div style={styles.v3Section}>
+          <div style={styles.sectionHeader}>
+            <ShieldCheck size={20} color="#818cf8" />
+            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700, color: '#f8fafc' }}>
+              My Active Teaching Assignments (Academic Contexts)
+            </h2>
+          </div>
+
+          {teachingAssignments.length === 0 ? (
+            <div style={styles.emptyBox}>No active teaching assignments allocated yet.</div>
+          ) : (
+            <div style={styles.taGrid}>
+              {teachingAssignments.map((ta) => (
+                <div key={ta._id} style={styles.taCard}>
+                  <div style={styles.taBadgeRow}>
+                    <span style={styles.courseBadge}>[{ta.course}]</span>
+                    <span style={styles.divBadge}>Sem {ta.semester} • Div {ta.division}</span>
+                  </div>
+
+                  <h3 style={styles.taSubjectName}>
+                    {ta.subjectCode}: {ta.subjectName || ta.subject?.name}
+                  </h3>
+
+                  <div style={styles.taMetaGrid}>
+                    <div style={styles.taMetaItem}>
+                      <span style={styles.taMetaLabel}>Evaluation Rule:</span>
+                      <span style={{ color: '#a7f3d0', fontWeight: 700 }}>
+                        {ta.subjectType === 'Major' ? 'Major (Best of 3 ICAs)' : 'Minor (ICA Mean)'}
+                      </span>
+                    </div>
+
+                    <div style={styles.taMetaItem}>
+                      <span style={styles.taMetaLabel}>Practical:</span>
+                      <span style={{ color: ta.hasPractical ? '#fef08a' : '#94a3b8', fontWeight: 700 }}>
+                        {ta.hasPractical ? 'Practical Included (50M)' : 'No Practical'}
+                      </span>
+                    </div>
+
+                    <div style={styles.taMetaItem}>
+                      <span style={styles.taMetaLabel}>Academic Year:</span>
+                      <span style={{ color: '#cbd5e1' }}>{ta.academicYear}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    style={styles.manageMarksBtn}
+                    onClick={() => navigate(`/teacher/marks?assignmentId=${ta._id}`)}
+                  >
+                    <span>Manage Class Marks & Grades</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: SUBMISSIONS REVIEW */}
       {activeTab === 'submissions' && (
@@ -257,30 +313,6 @@ const TeacherDashboardPage = () => {
               <div style={{ fontSize: '0.8rem', color: '#cbd5e1', display: 'flex', justifyContent: 'space-between' }}>
                 <span>Due: {new Date(asg.dueDate).toLocaleDateString()}</span>
                 <span>Max Marks: {asg.maxMarks}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* TAB 3: ASSIGNED COURSES */}
-      {activeTab === 'courses' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
-          {courses.map((course) => (
-            <div key={course._id} className="card">
-              <span className="badge badge-blue">{course.code}</span>
-              <h3 style={{ fontSize: '1.15rem', color: '#ffffff', fontWeight: 700, margin: '0.5rem 0' }}>
-                {course.subject}
-              </h3>
-              <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '0.75rem' }}>
-                Credits: {course.credits} • {course.branch} (Semester {course.semester})
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {course.modules?.map((m, mi) => (
-                  <div key={mi} style={{ backgroundColor: 'rgba(15,23,42,0.5)', padding: '0.5rem', borderRadius: '6px', fontSize: '0.78rem', color: '#cbd5e1' }}>
-                    {m.title}
-                  </div>
-                ))}
               </div>
             </div>
           ))}
@@ -440,7 +472,8 @@ const styles = {
   tabBar: {
     display: 'flex',
     gap: '0.75rem',
-    marginBottom: '1.5rem'
+    marginBottom: '1.5rem',
+    flexWrap: 'wrap'
   },
   tabBtn: {
     display: 'flex',
@@ -465,6 +498,100 @@ const styles = {
     borderCollapse: 'collapse',
     fontSize: '0.85rem',
     color: '#cbd5e1'
+  },
+  v3Section: {
+    marginBottom: '2rem'
+  },
+  sectionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginBottom: '1.25rem'
+  },
+  emptyBox: {
+    padding: '2.5rem',
+    textAlign: 'center',
+    backgroundColor: '#1e293b',
+    borderRadius: '12px',
+    color: '#94a3b8'
+  },
+  taGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gap: '1.25rem'
+  },
+  taCard: {
+    backgroundColor: '#1e293b',
+    borderRadius: '14px',
+    padding: '1.5rem',
+    border: '1px solid rgba(99, 102, 241, 0.25)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between'
+  },
+  taBadgeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginBottom: '0.65rem'
+  },
+  courseBadge: {
+    fontSize: '1rem',
+    fontWeight: '800',
+    color: '#6366f1',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    padding: '0.2rem 0.6rem',
+    borderRadius: '6px'
+  },
+  divBadge: {
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    color: '#fef08a',
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    padding: '0.2rem 0.6rem',
+    borderRadius: '6px'
+  },
+  taSubjectName: {
+    fontSize: '1.15rem',
+    fontWeight: '700',
+    color: '#ffffff',
+    margin: '0.25rem 0 1rem 0',
+    lineHeight: 1.3
+  },
+  taMetaGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.4rem',
+    marginBottom: '1.25rem',
+    fontSize: '0.82rem',
+    backgroundColor: '#0f172a',
+    padding: '0.85rem',
+    borderRadius: '8px'
+  },
+  taMetaItem: {
+    display: 'flex',
+    justifyContent: 'space-between'
+  },
+  taMetaLabel: {
+    color: '#64748b',
+    fontWeight: '600'
+  },
+  manageMarksBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    backgroundColor: '#10b981',
+    color: '#ffffff',
+    border: 'none',
+    padding: '0.7rem 1rem',
+    borderRadius: '10px',
+    fontSize: '0.88rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
   }
 };
 
