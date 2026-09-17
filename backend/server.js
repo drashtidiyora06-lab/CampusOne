@@ -21,6 +21,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
+import v3AcademicRoutes from './routes/v3AcademicRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -39,7 +41,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     app: 'CampusOne Shared REST API',
-    version: '2.0.0',
+    version: '3.0.0',
     timestamp: new Date()
   });
 });
@@ -58,6 +60,10 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+// CampusOne V3 Routes
+app.use('/api/v3/academics', v3AcademicRoutes);
+
 
 
 // Global Error Handler

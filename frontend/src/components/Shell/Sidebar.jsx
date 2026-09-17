@@ -28,7 +28,8 @@ const Sidebar = () => {
     if (role === 'faculty' || role === 'teacher') {
       return [
         { label: 'Faculty Portal', path: '/teacher/dashboard', icon: LayoutDashboard },
-        { label: 'Submissions & Grading', path: '/teacher/submissions', icon: FileCheck2 },
+        { label: 'Marks Management', path: '/teacher/marks', icon: FileCheck2 },
+        { label: 'Submissions & Grading', path: '/teacher/submissions', icon: FileText },
         { label: 'Class Academics', path: '/academics', icon: BookOpen },
         { label: 'Study Resources', path: '/resources', icon: FolderDown },
         { label: 'Campus Notices', path: '/notices', icon: Bell },
@@ -40,9 +41,9 @@ const Sidebar = () => {
     if (role === 'admin') {
       return [
         { label: 'Admin Control Panel', path: '/admin/dashboard', icon: Shield },
+        { label: 'Academic Management', path: '/admin/academics', icon: BookOpen },
         { label: 'Service Request Approvals', path: '/services', icon: FileCheck2 },
         { label: 'Notices & Banners', path: '/notices', icon: Bell },
-        { label: 'Academic Courses', path: '/academics', icon: BookOpen },
         { label: 'Study Resources', path: '/resources', icon: FolderDown },
         { label: 'Campus Directory', path: '/campus-guide', icon: Compass },
         { label: 'Clubs & Societies', path: '/clubs', icon: Users },
@@ -72,13 +73,14 @@ const Sidebar = () => {
     // Default Student Navigation
     return [
       { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+      { label: 'Exam Results', path: '/student/results', icon: FileCheck2 },
       { label: 'Notices', path: '/notices', icon: Bell },
       { label: 'Academics', path: '/academics', icon: BookOpen },
       { label: 'Resources', path: '/resources', icon: FolderDown },
       { label: 'Campus Guide', path: '/campus-guide', icon: Compass },
       { label: 'Clubs & Events', path: '/clubs', icon: Users },
       { label: 'Placements', path: '/placements', icon: Briefcase },
-      { label: 'Student Services', path: '/services', icon: FileCheck2 },
+      { label: 'Student Services', path: '/services', icon: UserCheck },
       { label: 'Productivity', path: '/productivity', icon: CheckSquare },
       { label: 'My Profile', path: '/profile', icon: User }
     ];
@@ -95,7 +97,7 @@ const Sidebar = () => {
         </div>
         <div>
           <h1 style={styles.brandTitle}>CampusOne</h1>
-          <span style={styles.brandSubtitle}>v2.0 Monorepo</span>
+          <span style={styles.brandSubtitle}>v3.0 Academic Engine</span>
         </div>
       </div>
 
@@ -124,12 +126,13 @@ const Sidebar = () => {
 
       {/* Footer info */}
       <div style={styles.footer}>
-        <div style={styles.footerBadge}>CampusOne v2.0 Platform</div>
+        <div style={styles.footerBadge}>CampusOne v3.0 Core</div>
         <div style={styles.footerText}>© 2026 CampusOne</div>
       </div>
     </aside>
   );
 };
+
 
 
 const styles = {

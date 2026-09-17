@@ -27,6 +27,12 @@ import ServicesPage from './pages/Services/ServicesPage';
 import ProductivityPage from './pages/Productivity/ProductivityPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 
+// CampusOne V3 Pages
+import TeacherMarksEntryPage from './pages/Teacher/TeacherMarksEntryPage';
+import StudentResultsPage from './pages/Student/StudentResultsPage';
+import AdminAcademicManagementPage from './pages/Admin/AdminAcademicManagementPage';
+
+
 function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
@@ -90,6 +96,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/teacher/marks"
+        element={
+          <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+            <Layout>
+              <TeacherMarksEntryPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/teacher/submissions"
         element={
           <ProtectedRoute allowedRoles={['faculty', 'admin']}>
@@ -112,6 +128,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/academics"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Layout>
+              <AdminAcademicManagementPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/users"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
@@ -121,6 +147,19 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Student Results Route */}
+      <Route
+        path="/student/results"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StudentResultsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
 
       {/* Club Admin Routes */}
       <Route
