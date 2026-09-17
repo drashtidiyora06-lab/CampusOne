@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -21,6 +21,7 @@ import {
 export default function TeacherMarksEntryPage() {
   const { user } = useAuth();
   const location = useLocation();
+  const params = useParams();
 
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState('');
@@ -36,9 +37,9 @@ export default function TeacherMarksEntryPage() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [validationError, setValidationError] = useState('');
 
-  // Extract URL search param query `assignmentId`
+  // Extract URL route param or search param query `assignmentId`
   const queryParams = new URLSearchParams(location.search);
-  const initialAssignmentId = queryParams.get('assignmentId');
+  const initialAssignmentId = params.assignmentId || queryParams.get('assignmentId');
 
   // Fetch teaching assignments for teacher
   useEffect(() => {
@@ -354,65 +355,37 @@ export default function TeacherMarksEntryPage() {
           ) : students.length === 0 ? (
             <div style={styles.emptyBox}>No students enrolled in this specific academic context.</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Roll No</th>
-                    <th style={styles.th}>Student Name</th>
-                    <th style={styles.th}>ICA 1 (25)</th>
-                    <th style={styles.th}>ICA 2 (25)</th>
-                    <th style={styles.th}>ICA 3 (25)</th>
-                    <th style={styles.thHighlightHeader}>
-                      {subjectType === 'Major' ? 'Best ICA' : 'ICA Mean'}
-                    </th>
-                    <th style={styles.th}>Practical (50)</th>
-                    <th style={styles.th}>Semester Exam (75)</th>
-                    <th style={styles.th}>Total (Obtd/Max)</th>
-                    <th style={styles.th}>Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((st) => {
-                    const row = gridState[st._id] || {};
-                    const calc = computePreview(st._id);
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Roll No</th>
+                      <th style={styles.th}>Student Name</th>
+                      <th style={styles.th}>ICA 1 (25)</th>
+                      <th style={styles.th}>ICA 2 (25)</th>
+                      <th style={styles.th}>ICA 3 (25)</th>
+                      <th style={styles.thHighlightHeader}>
+                        {subjectType === 'Major' ? 'Best ICA' : 'ICA Mean'}
+                      </th>
+                      <th style={styles.th}>Practical (50)</th>
+                      <th style={styles.th}>Semester Exam (75)</th>
+                      <th style={styles.th}>Total (Obtd/Max)</th>
+                      <th style={styles.th}>Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.map((st) => {
+                      const row = gridState[st._id] || {};
+                      const calc = computePreview(st._id);
 
-                    return (
-                      <tr key={st._id} style={styles.tr}>
-                        <td style={styles.tdBold}>{st.rollNumber}</td>
-                        <td style={styles.tdName}>{st.name}</td>
+                      return (
+                        <tr key={st._id} style={styles.tr}>
+                          <td style={styles.tdBold}>{st.rollNumber}</td>
+                          <td style={styles.tdName}>{st.name}</td>
 
-                        {/* ICA 1 */}
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            min="0"
-                            max="25"
-                            step="0.5"
-                            style={styles.cellInput}
-                            placeholder="0-25"
-                            value={row.ica1}
-                            onChange={(e) => handleGridCellChange(st._id, 'ica1', e.target.value)}
-                          />
-                        </td>
-
-                        {/* ICA 2 */}
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            min="0"
-                            max="25"
-                            step="0.5"
-                            style={styles.cellInput}
-                            placeholder="0-25"
-                            value={row.ica2}
-                            onChange={(e) => handleGridCellChange(st._id, 'ica2', e.target.value)}
-                          />
-                        </td>
-
-                        {/* ICA 3 */}
-                        <td style={styles.td}>
-                          {subjectType === 'Major' ? (
+                          {/* ICA 1 */}
+                          <td style={styles.td}>
                             <input
                               type="number"
                               min="0"
@@ -420,64 +393,109 @@ export default function TeacherMarksEntryPage() {
                               step="0.5"
                               style={styles.cellInput}
                               placeholder="0-25"
-                              value={row.ica3}
-                              onChange={(e) => handleGridCellChange(st._id, 'ica3', e.target.value)}
+                              value={row.ica1}
+                              onChange={(e) => handleGridCellChange(st._id, 'ica1', e.target.value)}
                             />
-                          ) : (
-                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>N/A</span>
-                          )}
-                        </td>
+                          </td>
 
-                        {/* Computed Best ICA or Mean */}
-                        <td style={styles.tdHighlight}>{calc.bestOrMean}</td>
-
-                        {/* Practical */}
-                        <td style={styles.td}>
-                          {hasPractical ? (
+                          {/* ICA 2 */}
+                          <td style={styles.td}>
                             <input
                               type="number"
                               min="0"
-                              max="50"
+                              max="25"
                               step="0.5"
                               style={styles.cellInput}
-                              placeholder="0-50"
-                              value={row.practical}
-                              onChange={(e) => handleGridCellChange(st._id, 'practical', e.target.value)}
+                              placeholder="0-25"
+                              value={row.ica2}
+                              onChange={(e) => handleGridCellChange(st._id, 'ica2', e.target.value)}
                             />
-                          ) : (
-                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>N/A</span>
-                          )}
-                        </td>
+                          </td>
 
-                        {/* Semester Exam */}
-                        <td style={styles.td}>
-                          <input
-                            type="number"
-                            min="0"
-                            max="75"
-                            step="0.5"
-                            style={styles.cellInput}
-                            placeholder="0-75"
-                            value={row.finalExam}
-                            onChange={(e) => handleGridCellChange(st._id, 'finalExam', e.target.value)}
-                          />
-                        </td>
+                          {/* ICA 3 */}
+                          <td style={styles.td}>
+                            {subjectType === 'Major' ? (
+                              <input
+                                type="number"
+                                min="0"
+                                max="25"
+                                step="0.5"
+                                style={styles.cellInput}
+                                placeholder="0-25"
+                                value={row.ica3}
+                                onChange={(e) => handleGridCellChange(st._id, 'ica3', e.target.value)}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>N/A</span>
+                            )}
+                          </td>
 
-                        {/* Total Marks */}
-                        <td style={styles.tdBold}>
-                          {calc.obt} / {calc.maxTot}
-                        </td>
+                          {/* Computed Best ICA or Mean */}
+                          <td style={styles.tdHighlight}>{calc.bestOrMean}</td>
 
-                        {/* Calculated Grade */}
-                        <td style={styles.td}>
-                          <span style={styles.gradeBadge}>{calc.grade}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {/* Practical */}
+                          <td style={styles.td}>
+                            {hasPractical ? (
+                              <input
+                                type="number"
+                                min="0"
+                                max="50"
+                                step="0.5"
+                                style={styles.cellInput}
+                                placeholder="0-50"
+                                value={row.practical}
+                                onChange={(e) => handleGridCellChange(st._id, 'practical', e.target.value)}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>N/A</span>
+                            )}
+                          </td>
+
+                          {/* Semester Exam */}
+                          <td style={styles.td}>
+                            <input
+                              type="number"
+                              min="0"
+                              max="75"
+                              step="0.5"
+                              style={styles.cellInput}
+                              placeholder="0-75"
+                              value={row.finalExam}
+                              onChange={(e) => handleGridCellChange(st._id, 'finalExam', e.target.value)}
+                            />
+                          </td>
+
+                          {/* Total Marks */}
+                          <td style={styles.tdBold}>
+                            {calc.obt} / {calc.maxTot}
+                          </td>
+
+                          {/* Calculated Grade */}
+                          <td style={styles.td}>
+                            <span style={styles.gradeBadge}>{calc.grade}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Save Action Bar */}
+              <div style={{ padding: '1.25rem 1.5rem', backgroundColor: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>
+                  Showing {students.length} enrolled students for {assignmentDetails?.course} Sem {assignmentDetails?.semester} Div {assignmentDetails?.division}
+                </span>
+                <button
+                  style={{ ...styles.saveBtn, padding: '0.75rem 1.75rem', fontSize: '0.95rem' }}
+                  onClick={handleSaveFullGrid}
+                  disabled={saving || loading}
+                >
+                  {saving ? <RefreshCw size={18} className="spin" /> : <Save size={18} />}
+                  {saving ? 'Saving to Database...' : 'SAVE MARKS TO DATABASE'}
+                </button>
+              </div>
+            </>
           )}
         </div>
       ) : (

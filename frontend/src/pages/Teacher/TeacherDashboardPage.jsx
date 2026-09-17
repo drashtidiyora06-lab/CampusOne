@@ -43,26 +43,36 @@ const TeacherDashboardPage = () => {
   }, [user]);
 
   const fetchTeacherData = async () => {
+    // 1. Fetch V3 Teaching Assignments (Primary)
     try {
-      const [dashRes, subRes, taRes] = await Promise.all([
-        api.get('/teacher/dashboard'),
-        api.get('/teacher/submissions'),
-        api.get('/v3/academics/teaching-assignments')
-      ]);
-
-      if (dashRes.data.success) {
-        setStats(dashRes.data.stats);
-        setAssignments(dashRes.data.assignments);
-        setCourses(dashRes.data.courses);
-      }
-      if (subRes.data.success) {
-        setSubmissions(subRes.data.submissions);
-      }
+      const taRes = await api.get('/v3/academics/teaching-assignments');
       if (taRes.data.success) {
         setTeachingAssignments(taRes.data.assignments || []);
       }
     } catch (err) {
-      console.warn('Teacher data fetch error', err);
+      console.warn('V3 teaching assignments fetch warning:', err);
+    }
+
+    // 2. Fetch V2 dashboard stats
+    try {
+      const dashRes = await api.get('/teacher/dashboard');
+      if (dashRes.data.success) {
+        setStats(dashRes.data.stats || { totalAssignments: 0, totalResources: 0, totalCourses: 0, totalSubmissions: 0 });
+        setAssignments(dashRes.data.assignments || []);
+        setCourses(dashRes.data.courses || []);
+      }
+    } catch (err) {
+      console.warn('Teacher dashboard fetch warning:', err);
+    }
+
+    // 3. Fetch V2 submissions
+    try {
+      const subRes = await api.get('/teacher/submissions');
+      if (subRes.data.success) {
+        setSubmissions(subRes.data.submissions || []);
+      }
+    } catch (err) {
+      console.warn('Teacher submissions fetch warning:', err);
     }
   };
 
@@ -180,8 +190,8 @@ const TeacherDashboardPage = () => {
         <div style={styles.v3Section}>
           <div style={styles.sectionHeader}>
             <ShieldCheck size={20} color="#818cf8" />
-            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700, color: '#f8fafc' }}>
-              My Active Teaching Assignments (Academic Contexts)
+            <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 800, color: '#ffffff', letterSpacing: '0.02em' }}>
+              MY TEACHING ASSIGNMENTS
             </h2>
           </div>
 
@@ -192,8 +202,8 @@ const TeacherDashboardPage = () => {
               {teachingAssignments.map((ta) => (
                 <div key={ta._id} style={styles.taCard}>
                   <div style={styles.taBadgeRow}>
-                    <span style={styles.courseBadge}>[{ta.course}]</span>
-                    <span style={styles.divBadge}>Sem {ta.semester} • Div {ta.division}</span>
+                    <span style={styles.courseBadge}>{ta.course}</span>
+                    <span style={styles.divBadge}>Semester {ta.semester} • Division {ta.division}</span>
                   </div>
 
                   <h3 style={styles.taSubjectName}>
@@ -225,7 +235,7 @@ const TeacherDashboardPage = () => {
                     style={styles.manageMarksBtn}
                     onClick={() => navigate(`/teacher/marks?assignmentId=${ta._id}`)}
                   >
-                    <span>Manage Class Marks & Grades</span>
+                    <span>Manage Marks & Enter Grades</span>
                     <ArrowRight size={16} />
                   </button>
                 </div>

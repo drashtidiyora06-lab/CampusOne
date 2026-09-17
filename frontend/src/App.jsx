@@ -88,7 +88,7 @@ function AppRoutes() {
       <Route
         path="/teacher/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+          <ProtectedRoute allowedRoles={['faculty', 'teacher', 'admin']}>
             <Layout>
               <TeacherDashboardPage />
             </Layout>
@@ -98,7 +98,17 @@ function AppRoutes() {
       <Route
         path="/teacher/marks"
         element={
-          <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+          <ProtectedRoute allowedRoles={['faculty', 'teacher', 'admin']}>
+            <Layout>
+              <TeacherMarksEntryPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher/marks/:assignmentId"
+        element={
+          <ProtectedRoute allowedRoles={['faculty', 'teacher', 'admin']}>
             <Layout>
               <TeacherMarksEntryPage />
             </Layout>
@@ -108,7 +118,7 @@ function AppRoutes() {
       <Route
         path="/teacher/submissions"
         element={
-          <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+          <ProtectedRoute allowedRoles={['faculty', 'teacher', 'admin']}>
             <Layout>
               <TeacherDashboardPage />
             </Layout>
