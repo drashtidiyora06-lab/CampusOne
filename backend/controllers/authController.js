@@ -59,13 +59,15 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide email or user ID' });
     }
 
+    const queryRegex = new RegExp(`^${loginQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+
     const user = await User.findOne({
       $or: [
         { email: loginQuery.toLowerCase() },
-        { studentId: loginQuery },
-        { facultyId: loginQuery },
-        { adminId: loginQuery },
-        { rollNumber: loginQuery }
+        { studentId: queryRegex },
+        { facultyId: queryRegex },
+        { adminId: queryRegex },
+        { rollNumber: queryRegex }
       ]
     });
 

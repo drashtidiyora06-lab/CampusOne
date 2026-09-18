@@ -38,7 +38,7 @@ const LoginPage = () => {
     setActiveTab(tab);
     setError('');
     if (tab === 'student') setIdentifier('STU-2026-101');
-    else if (tab === 'faculty') setIdentifier('FAC-CS-022');
+    else if (tab === 'faculty') setIdentifier('FAC-2026-001');
     else if (tab === 'admin') setIdentifier('ADM-2026-001');
   };
 
@@ -47,13 +47,17 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    const res = await login(identifier, password);
-    setLoading(false);
-
-    if (res.success && res.user) {
-      redirectUserByRole(res.user.role);
-    } else {
-      setError(res.message || 'Invalid credentials');
+    try {
+      const res = await login(identifier, password);
+      if (res && res.success && res.user) {
+        redirectUserByRole(res.user.role);
+      } else {
+        setError((res && res.message) || 'Invalid credentials');
+      }
+    } catch (err) {
+      setError(err.message || 'Authentication request failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,12 +66,17 @@ const LoginPage = () => {
     setLoading(true);
     setIdentifier(demoId);
     setPassword(demoPass);
-    const res = await login(demoId, demoPass);
-    setLoading(false);
-    if (res.success && res.user) {
-      redirectUserByRole(res.user.role);
-    } else {
-      setError(res.message || 'Demo login failed');
+    try {
+      const res = await login(demoId, demoPass);
+      if (res && res.success && res.user) {
+        redirectUserByRole(res.user.role);
+      } else {
+        setError((res && res.message) || 'Demo login failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Demo authentication failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -172,7 +181,7 @@ const LoginPage = () => {
             type="button"
             className="btn-secondary"
             style={styles.demoBtn}
-            onClick={() => handleQuickDemoLogin('FAC-CS-022', 'password123', 'faculty')}
+            onClick={() => handleQuickDemoLogin('FAC-2026-001', 'password123', 'faculty')}
           >
             <span style={{ ...styles.dot, backgroundColor: '#6366f1' }} /> Faculty
           </button>

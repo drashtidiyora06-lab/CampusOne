@@ -41,14 +41,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (identifier, password) => {
     try {
       const res = await api.post('/auth/login', { identifier, password, email: identifier });
-      if (res.data.success) {
+      if (res.data && res.data.success) {
         localStorage.setItem('campusone_token', res.data.token);
         setToken(res.data.token);
         setUser(res.data.user);
         return { success: true, user: res.data.user };
       }
+      return { success: false, message: res.data?.message || 'Invalid credentials' };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || 'Invalid credentials' };
+      return {
+        success: false,
+        message: err.response?.data?.message || err.message || 'Authentication failed. Please try again.'
+      };
     }
   };
 

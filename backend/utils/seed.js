@@ -600,16 +600,16 @@ export const seedDatabase = async () => {
 
     // 15. Seed Campus Guide Locations
     await CampusGuide.insertMany([
-      { name: 'Central Library', category: 'Academic', location: 'Main Academic Block', building: 'Block A', floor: '2nd Floor', roomNumber: '201', timings: '08:00 AM - 08:00 PM', description: 'Access over 50,000 reference books, digital archives, and quiet study pods.' },
-      { name: 'Advanced Computer Lab 1', category: 'Labs', location: 'IT Wing', building: 'Block B', floor: '1st Floor', roomNumber: '104', timings: '08:30 AM - 05:30 PM', description: 'High-performance computing laboratory equipped with 60 workstations and high-speed fiber internet.' },
-      { name: 'Science & Electronics Lab', category: 'Labs', location: 'Science Wing', building: 'Block C', floor: 'Ground Floor', roomNumber: '002', timings: '09:00 AM - 05:00 PM', description: 'State-of-the-art physics, chemistry, and electronics testing equipment.' },
-      { name: 'Main Auditorium', category: 'Facilities', location: 'Campus Grounds', building: 'Auditorium Complex', floor: 'Ground Floor', roomNumber: 'AUD-1', timings: 'Event Based', description: 'Air-conditioned 1,200 seat theater with 4K projection and acoustic sound system.' },
-      { name: 'Student Canteen', category: 'Dining', location: 'Student Plaza', building: 'Plaza Center', floor: 'Ground Floor', roomNumber: 'CN-1', timings: '07:30 AM - 07:00 PM', description: 'Hygienic multi-cuisine cafeteria providing fresh meals, beverages, and snacks.' },
-      { name: 'Administration Office', category: 'Admin', location: 'Main Administrative Building', building: 'Block A', floor: 'Ground Floor', roomNumber: '101', timings: '09:30 AM - 04:30 PM', description: 'College registrar, fee collection counters, and general inquiries.' },
-      { name: 'Examination Cell', category: 'Admin', location: 'Administrative Block', building: 'Block A', floor: '1st Floor', roomNumber: '112', timings: '10:00 AM - 04:00 PM', description: 'Official hall ticket issuance, grade transcript verification, and re-evaluation applications.' },
-      { name: 'Placement Cell', category: 'Career', location: 'Placement Building', building: 'Block D', floor: '3rd Floor', roomNumber: '305', timings: '09:00 AM - 05:00 PM', description: 'Corporate recruitment desk, interview rooms, and career guidance center.' },
-      { name: 'Student Help Desk', category: 'Support', location: 'Student Activity Center', building: 'Block B', floor: 'Ground Floor', roomNumber: '010', timings: '09:00 AM - 05:00 PM', description: 'First point of contact for service requests, bonafide certificates, and lost-and-found.' },
-      { name: 'Sports Complex & Gymnasium', category: 'Recreation', location: 'South Campus', building: 'Sports Complex', floor: 'Ground Floor', roomNumber: 'SP-1', timings: '06:00 AM - 07:00 PM', description: 'Indoor basketball court, badminton courts, table tennis, and modern fitness gym.' }
+      { name: 'Central Library', category: 'library', location: 'Main Academic Block', building: 'Block A', floor: '2nd Floor', roomNumber: '201', timings: '08:00 AM - 08:00 PM', description: 'Access over 50,000 reference books, digital archives, and quiet study pods.' },
+      { name: 'Advanced Computer Lab 1', category: 'lab', location: 'IT Wing', building: 'Block B', floor: '1st Floor', roomNumber: '104', timings: '08:30 AM - 05:30 PM', description: 'High-performance computing laboratory equipped with 60 workstations and high-speed fiber internet.' },
+      { name: 'Science & Electronics Lab', category: 'lab', location: 'Science Wing', building: 'Block C', floor: 'Ground Floor', roomNumber: '002', timings: '09:00 AM - 05:00 PM', description: 'State-of-the-art physics, chemistry, and electronics testing equipment.' },
+      { name: 'Main Auditorium', category: 'admin', location: 'Campus Grounds', building: 'Auditorium Complex', floor: 'Ground Floor', roomNumber: 'AUD-1', timings: 'Event Based', description: 'Air-conditioned 1,200 seat theater with 4K projection and acoustic sound system.' },
+      { name: 'Student Canteen', category: 'canteen', location: 'Student Plaza', building: 'Plaza Center', floor: 'Ground Floor', roomNumber: 'CN-1', timings: '07:30 AM - 07:00 PM', description: 'Hygienic multi-cuisine cafeteria providing fresh meals, beverages, and snacks.' },
+      { name: 'Administration Office', category: 'admin', location: 'Main Administrative Building', building: 'Block A', floor: 'Ground Floor', roomNumber: '101', timings: '09:30 AM - 04:30 PM', description: 'College registrar, fee collection counters, and general inquiries.' },
+      { name: 'Examination Cell', category: 'admin', location: 'Administrative Block', building: 'Block A', floor: '1st Floor', roomNumber: '112', timings: '10:00 AM - 04:00 PM', description: 'Official hall ticket issuance, grade transcript verification, and re-evaluation applications.' },
+      { name: 'Placement Cell', category: 'admin', location: 'Placement Building', building: 'Block D', floor: '3rd Floor', roomNumber: '305', timings: '09:00 AM - 05:00 PM', description: 'Corporate recruitment desk, interview rooms, and career guidance center.' },
+      { name: 'Student Help Desk', category: 'admin', location: 'Student Activity Center', building: 'Block B', floor: 'Ground Floor', roomNumber: '010', timings: '09:00 AM - 05:00 PM', description: 'First point of contact for service requests, bonafide certificates, and lost-and-found.' },
+      { name: 'Sports Complex & Gymnasium', category: 'sports', location: 'South Campus', building: 'Sports Complex', floor: 'Ground Floor', roomNumber: 'SP-1', timings: '06:00 AM - 07:00 PM', description: 'Indoor basketball court, badminton courts, table tennis, and modern fitness gym.' }
     ]);
 
     // 16. Seed Clubs
@@ -618,82 +618,74 @@ export const seedDatabase = async () => {
         name: 'Rotaract Club of CampusOne',
         category: 'Social Service',
         description: 'Fostering leadership, youth development, and community welfare initiatives.',
-        coordinator: 'Sarah Connor',
-        email: 'rotaract@college.edu',
+        adminName: 'Sarah Connor',
+        adminEmail: 'rotaract@college.edu',
         membersCount: 140,
-        activities: ['Community Service', 'Leadership Workshops', 'Youth Summits'],
         events: [
-          { title: 'Annual Youth Leadership Summit 2026', date: new Date('2026-10-05'), location: 'Main Auditorium', description: 'Inter-college leadership panel and keynote sessions.' }
+          { title: 'Annual Youth Leadership Summit 2026', description: 'Inter-college leadership panel and keynote sessions.', date: new Date('2026-10-05'), venue: 'Main Auditorium' }
         ]
       },
       {
         name: 'NSS (National Service Scheme)',
         category: 'Social Service',
         description: 'Not Me But You — selfless community service and rural outreach programs.',
-        coordinator: 'Prof. Rajesh Sharma',
-        email: 'nss@college.edu',
+        adminName: 'Prof. Rajesh Sharma',
+        adminEmail: 'nss@college.edu',
         membersCount: 210,
-        activities: ['Blood Donation Camps', 'Tree Plantation Drives', 'Rural Literacy Camps'],
         events: [
-          { title: 'Mega Campus Blood Donation Camp', date: new Date('2026-09-28'), location: 'Student Plaza', description: 'Annual blood donation drive in association with City Red Cross.' }
+          { title: 'Mega Campus Blood Donation Camp', description: 'Annual blood donation drive in association with City Red Cross.', date: new Date('2026-09-28'), venue: 'Student Plaza' }
         ]
       },
       {
         name: 'DLLE (Department of Lifelong Learning & Extension)',
-        category: 'Extension Work',
+        category: 'Social Service',
         description: 'Promoting community outreach, career guidance, and social survey projects.',
-        coordinator: 'Prof. Meera Nair',
-        email: 'dlle@college.edu',
+        adminName: 'Prof. Meera Nair',
+        adminEmail: 'dlle@college.edu',
         membersCount: 110,
-        activities: ['Status of Women in Society Survey', 'Senior Citizen Digital Literacy'],
         events: [
-          { title: 'DLLE Community Survey Exhibition', date: new Date('2026-10-18'), location: 'Exhibition Hall B', description: 'Student presentation of research survey findings.' }
+          { title: 'DLLE Community Survey Exhibition', description: 'Student presentation of research survey findings.', date: new Date('2026-10-18'), venue: 'Exhibition Hall B' }
         ]
       },
       {
         name: 'Cultural Club & Performing Arts',
-        category: 'Arts & Culture',
+        category: 'Cultural',
         description: 'Hub for music, dance, drama, fashion, and inter-college cultural festivals.',
-        coordinator: 'Prof. Anita Roy',
-        email: 'cultural@college.edu',
-        membersCount: 180,
-        activities: ['Annual Fest Tarang', 'Drama Workshops', 'Musical Nights']
+        adminName: 'Prof. Anita Roy',
+        adminEmail: 'cultural@college.edu',
+        membersCount: 180
       },
       {
         name: 'Coding & Tech Innovators Club',
         category: 'Technical',
         description: 'Competitive programming, hackathons, open-source software, and AI workshops.',
-        coordinator: 'Dr. Vikram Seth',
-        email: 'techclub@college.edu',
-        membersCount: 160,
-        activities: ['24-Hour Hackathon', 'Python Bootcamp', 'Open Source Sprint']
+        adminName: 'Dr. Vikram Seth',
+        adminEmail: 'techclub@college.edu',
+        membersCount: 160
       },
       {
         name: 'Sports & Athletics Association',
         category: 'Sports',
         description: 'Organizing inter-departmental tournaments in cricket, football, chess, and track events.',
-        coordinator: 'Prof. Arjun Verma',
-        email: 'sports@college.edu',
-        membersCount: 220,
-        activities: ['Annual Sports Meet', 'Inter-College Football League']
+        adminName: 'Prof. Arjun Verma',
+        adminEmail: 'sports@college.edu',
+        membersCount: 220
       },
       {
         name: 'Literary & Debating Society',
         category: 'Literary',
         description: 'Model UN, parliamentary debates, creative writing competitions, and book clubs.',
-        coordinator: 'Prof. Sunita Patil',
-        email: 'literary@college.edu',
-        membersCount: 95,
-        activities: ['National Parliamentary Debate', 'Poetry Slam']
+        adminName: 'Prof. Sunita Patil',
+        adminEmail: 'literary@college.edu',
+        membersCount: 95
       },
       {
         name: 'E-Cell (Entrepreneurship Cell)',
-        category: 'Business',
+        category: 'Technical',
         description: 'Empowering student startups with mentorship, pitch competitions, and angel funding connections.',
-        coordinator: 'Prof. Suresh Kulkarni',
-        email: 'ecell@college.edu',
-        membersCount: 130,
-        activities: ['Startup Pitch Fest', 'Founder Speaker Series']
+        adminName: 'Prof. Suresh Kulkarni',
+        adminEmail: 'ecell@college.edu',
+        membersCount: 130
       }
     ]);
 
@@ -702,85 +694,75 @@ export const seedDatabase = async () => {
       {
         companyName: 'TCS (Tata Consultancy Services)',
         logoUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=120&auto=format&fit=crop&q=80',
-        jobRole: 'Graduate Trainee / Software Engineer',
-        package: '7.5 LPA',
-        eligibilityCriteria: 'BSCIT / BCOM with Min 60% (6.5 CGPA)',
-        eligibleCourses: ['BSCIT', 'BCOM', 'BMS'],
+        role: 'Graduate Trainee / Software Engineer',
+        ctc: '7.5 LPA',
+        eligibleBranches: ['BSCIT', 'BCOM', 'BMS'],
         driveDate: new Date('2026-10-15'),
-        applicationDeadline: new Date('2026-10-05'),
+        deadlineDate: new Date('2026-10-05'),
         location: 'Mumbai / Pune',
         description: 'Campus placement drive for software development, cloud infrastructure, and business analytics roles.',
-        rounds: ['Online Aptitude Test', 'Technical Coding Interview', 'HR Interview'],
-        status: 'Active',
-        applicantsCount: 85
+        status: 'active'
       },
       {
         companyName: 'Deloitte India',
         logoUrl: 'https://images.unsplash.com/photo-1554469384-e58fac16e23a?w=120&auto=format&fit=crop&q=80',
-        jobRole: 'Associate Risk & Financial Analyst',
-        package: '8.2 LPA',
-        eligibilityCriteria: 'BAF / BCOM / BMS with Min 70% (7.5 CGPA)',
-        eligibleCourses: ['BAF', 'BCOM', 'BMS'],
+        role: 'Associate Risk & Financial Analyst',
+        ctc: '8.2 LPA',
+        eligibleBranches: ['BAF', 'BCOM', 'BMS'],
         driveDate: new Date('2026-10-22'),
-        applicationDeadline: new Date('2026-10-12'),
+        deadlineDate: new Date('2026-10-12'),
         location: 'Mumbai / Bengaluru',
         description: 'Financial auditing, tax advisory, and risk assessment consultant positions.',
-        rounds: ['Resume Screening', 'Case Study Assessment', 'Partner Interview'],
-        status: 'Active',
-        applicantsCount: 62
+        status: 'active'
       },
       {
         companyName: 'HDFC Bank',
         logoUrl: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=120&auto=format&fit=crop&q=80',
-        jobRole: 'Management Trainee - Retail Banking',
-        package: '6.8 LPA',
-        eligibilityCriteria: 'BMS / BAF / BCOM Min 60%',
-        eligibleCourses: ['BMS', 'BAF', 'BCOM'],
+        role: 'Management Trainee - Retail Banking',
+        ctc: '6.8 LPA',
+        eligibleBranches: ['BMS', 'BAF', 'BCOM'],
         driveDate: new Date('2026-11-02'),
-        applicationDeadline: new Date('2026-10-25'),
+        deadlineDate: new Date('2026-10-25'),
         location: 'Pan India',
         description: 'Retail banking operations, customer relationship management, and credit analysis.',
-        rounds: ['Group Discussion', 'Personal Interview'],
-        status: 'Active',
-        applicantsCount: 45
+        status: 'active'
       },
       {
         companyName: 'Infosys BPM',
         logoUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=120&auto=format&fit=crop&q=80',
-        jobRole: 'Process Associate - IT & Media',
-        package: '5.5 LPA',
-        eligibilityCriteria: 'All Undergraduates (Min 55%)',
-        eligibleCourses: ['BSCIT', 'BCOM', 'BMS', 'BAF', 'BMM'],
+        role: 'Process Associate - IT & Media',
+        ctc: '5.5 LPA',
+        eligibleBranches: ['BSCIT', 'BCOM', 'BMS', 'BAF', 'BMM'],
         driveDate: new Date('2026-11-10'),
-        applicationDeadline: new Date('2026-10-30'),
+        deadlineDate: new Date('2026-10-30'),
         location: 'Pune',
         description: 'Digital operations, content management, and IT helpdesk support.',
-        rounds: ['Communication Assessment', 'HR Round'],
-        status: 'Active',
-        applicantsCount: 110
+        status: 'active'
       }
     ]);
 
     // 18. Seed Student Service Requests
     await ServiceRequest.insertMany([
       {
-        studentId: demoStudent1._id,
-        studentName: demoStudent1.name,
-        requestType: 'Bonafide Certificate',
+        userId: demoStudent1._id,
+        userName: demoStudent1.name,
+        rollNumber: demoStudent1.rollNumber || 'STU-2026-101',
+        requestType: 'bonafide',
         subject: 'Bonafide Certificate for Education Loan',
-        description: 'Requesting urgent bonafide certificate for passport renewal and bank loan application.',
-        status: 'Approved',
-        adminRemarks: 'Approved and digital certificate generated.',
+        details: 'Requesting urgent bonafide certificate for passport renewal and bank loan application.',
+        status: 'approved',
+        adminRemark: 'Approved and digital certificate generated.',
         createdAt: new Date('2026-09-01')
       },
       {
-        studentId: demoStudent1._id,
-        studentName: demoStudent1.name,
-        requestType: 'ID Card Reissue',
+        userId: demoStudent1._id,
+        userName: demoStudent1.name,
+        rollNumber: demoStudent1.rollNumber || 'STU-2026-101',
+        requestType: 'id_card',
         subject: 'Replacement Smart ID Card',
-        description: 'Original ID card lost in library; paid Rs. 100 reissue fee online.',
-        status: 'Pending',
-        adminRemarks: 'Under processing by admin desk.',
+        details: 'Original ID card lost in library; paid Rs. 100 reissue fee online.',
+        status: 'pending',
+        adminRemark: 'Under processing by admin desk.',
         createdAt: new Date('2026-09-12')
       }
     ]);
@@ -825,38 +807,41 @@ export const seedDatabase = async () => {
     // 20. Seed User Notifications & Tasks
     await Notification.insertMany([
       {
-        user: demoStudent1._id,
+        userId: demoStudent1._id,
         title: 'Bonafide Certificate Approved',
         message: 'Your request for Bonafide Certificate has been approved by Admin.',
+        type: 'service',
         link: '/services',
         read: false
       },
       {
-        user: demoStudent1._id,
+        userId: demoStudent1._id,
         title: 'New Placement Drive Posted',
         message: 'TCS Placement Drive (7.5 LPA) is now open for applications.',
+        type: 'placement',
         link: '/placements',
         read: false
       },
       {
-        user: facultyUser._id,
+        userId: facultyUser._id,
         title: 'Marks Management Active',
         message: 'You have active teaching assignments for BCOM-A and BSCIT-B.',
+        type: 'assignment',
         link: '/teacher/marks',
         read: false
       }
     ]);
 
     await Task.create({
-      user: demoStudent1._id,
+      userId: demoStudent1._id,
       title: 'Complete Business Communication Case Study Submission',
-      category: 'Academic',
+      category: 'academic',
       completed: true
     });
     await Task.create({
-      user: demoStudent1._id,
+      userId: demoStudent1._id,
       title: 'Prepare for Mid-Semester DBMS Practical Exam',
-      category: 'Exam Prep',
+      category: 'academic',
       completed: false
     });
 
