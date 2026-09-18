@@ -20,20 +20,8 @@ export const protect = async (req, res, next) => {
         return next();
       }
     } catch (error) {
-      console.warn('[Auth Middleware] Invalid token, falling back to demo session user');
+      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
-  }
-
-  // Fallback demo user if token is missing or invalid
-  const requestedRole = req.headers['x-demo-role'] || 'student';
-  let fallbackUser = await User.findOne({ role: requestedRole });
-  if (!fallbackUser) {
-    fallbackUser = await User.findOne();
-  }
-
-  if (fallbackUser) {
-    req.user = fallbackUser;
-    return next();
   }
 
   return res.status(401).json({ success: false, message: 'Not authorized, no token provided' });

@@ -5,6 +5,7 @@ import StudentMarks from '../models/StudentMarks.js';
 import V3Result from '../models/V3Result.js';
 import AssessmentConfig from '../models/AssessmentConfig.js';
 import User from '../models/User.js';
+import Attendance from '../models/Attendance.js';
 
 // Calculate Best of 3 or Mean ICA and calculate grade
 export const calculateSubjectPerformance = (marks, subjectType, hasPractical) => {
@@ -488,3 +489,165 @@ export const getAdminStats = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getStudentHistoricalResults = async (req, res) => {
+  try {
+    let studentId = req.user._id;
+    if ((req.user.role === 'admin' || req.user.role === 'faculty') && req.query.studentId) {
+      studentId = req.query.studentId;
+    }
+
+    const results = await V3Result.find({ student: studentId }).sort({ semester: 1 });
+    res.json({ success: true, count: results.length, results });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getAttendanceForAssignment = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const { date } = req.query;
+
+    const assignment = await TeachingAssignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Teaching assignment not found' });
+    }
+
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+
+    const nextDate = new Date(targetDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    const records = await Attendance.find({
+      teachingAssignment: assignment._id,
+      date: { $gte: targetDate, $lt: nextDate }
+    });
+
+    const recordMap = {};
+    records.forEach(r => {
+      recordMap[r.student.toString()] = r.status;
+    });
+
+    const students = await User.find({
+      role: 'student',
+      course: assignment.course,
+      semester: assignment.semester,
+      division: assignment.division
+    }).select('_id name studentId rollNumber').sort({ rollNumber: 1 });
+
+    const studentList = students.map(s => ({
+      _id: s._id,
+      studentId: s.studentId,
+      name: s.name,
+      rollNumber: s.rollNumber,
+      status: recordMap[s._id.toString()] || 'Present'
+    }));
+
+    res.json({
+      success: true,
+      assignment,
+      date: targetDate,
+      students: studentList
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const saveAttendance = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const { date, attendanceData } = req.body; // array of { studentId, status }
+
+    const assignment = await TeachingAssignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Teaching assignment not found' });
+    }
+
+    const targetDate = date ? new Date(date) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+
+    let updated = 0;
+    for (const item of attendanceData) {
+      await Attendance.findOneAndUpdate(
+        {
+          student: item.studentId,
+          teachingAssignment: assignment._id,
+          date: targetDate
+        },
+        {
+          student: item.studentId,
+          teachingAssignment: assignment._id,
+          course: assignment.course,
+          semester: assignment.semester,
+          division: assignment.division,
+          subject: assignment.subject,
+          subjectCode: assignment.subjectCode,
+          subjectName: assignment.subjectName,
+          teacher: assignment.teacher,
+          academicYear: assignment.academicYear,
+          date: targetDate,
+          status: item.status || 'Present'
+        },
+        { upsert: true, new: true }
+      );
+      updated++;
+    }
+
+    res.json({ success: true, message: `Successfully saved attendance for ${updated} students.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getStudentAttendanceSummary = async (req, res) => {
+  try {
+    let studentId = req.user._id;
+    if ((req.user.role === 'admin' || req.user.role === 'faculty') && req.query.studentId) {
+      studentId = req.query.studentId;
+    }
+
+    const records = await Attendance.find({ student: studentId });
+
+    const subjectStats = {};
+    records.forEach(r => {
+      const sKey = r.subjectCode || r.subjectName || 'General';
+      if (!subjectStats[sKey]) {
+        subjectStats[sKey] = { subjectName: r.subjectName || sKey, total: 0, present: 0 };
+      }
+      subjectStats[sKey].total += 1;
+      if (r.status === 'Present') {
+        subjectStats[sKey].present += 1;
+      }
+    });
+
+    const summary = Object.keys(subjectStats).map(sKey => {
+      const item = subjectStats[sKey];
+      const percentage = item.total > 0 ? Math.round((item.present / item.total) * 100) : 0;
+      return {
+        subjectCode: sKey,
+        subjectName: item.subjectName,
+        totalClasses: item.total,
+        presentClasses: item.present,
+        percentage
+      };
+    });
+
+    const overallTotal = records.length;
+    const overallPresent = records.filter(r => r.status === 'Present').length;
+    const overallPercentage = overallTotal > 0 ? Math.round((overallPresent / overallTotal) * 100) : 85;
+
+    res.json({
+      success: true,
+      overallPercentage,
+      overallTotal,
+      overallPresent,
+      summary
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

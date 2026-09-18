@@ -33,7 +33,15 @@ export const connectDB = async () => {
     }
 
     // 3. MongoMemoryServer with binary fallback options
-    mongoMemoryServer = await MongoMemoryServer.create();
+    try {
+      mongoMemoryServer = await MongoMemoryServer.create({
+        binary: { version: '6.0.6' },
+        instance: { dbName: 'campusone' }
+      });
+    } catch (memErr) {
+      console.warn(`[DB] MongoMemoryServer 6.0.6 create failed (${memErr.message}), trying default...`);
+      mongoMemoryServer = await MongoMemoryServer.create();
+    }
     const memUri = mongoMemoryServer.getUri();
     await mongoose.connect(memUri);
     console.log(`[DB] Connected to In-Memory MongoDB Server at ${memUri}`);

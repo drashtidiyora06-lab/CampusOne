@@ -9,6 +9,10 @@ import {
   getMarksForAssignment,
   saveBulkMarks,
   getStudentResults,
+  getStudentHistoricalResults,
+  getAttendanceForAssignment,
+  saveAttendance,
+  getStudentAttendanceSummary,
   getAdminStats
 } from '../controllers/academicCoreController.js';
 
@@ -25,6 +29,12 @@ router.get('/teaching-assignments/:assignmentId', getTeachingAssignmentById);
 router.get('/teaching-assignments/:assignmentId/students', getStudentsForAssignment);
 router.get('/teaching-assignments/:assignmentId/marks', getMarksForAssignment);
 router.get('/results', getStudentResults);
+router.get('/results/history', getStudentHistoricalResults);
+
+// Attendance routes
+router.get('/teaching-assignments/:assignmentId/attendance', authorizeRoles('faculty', 'teacher', 'admin'), getAttendanceForAssignment);
+router.post('/teaching-assignments/:assignmentId/attendance', authorizeRoles('faculty', 'teacher', 'admin'), saveAttendance);
+router.get('/student/attendance', getStudentAttendanceSummary);
 
 // Teacher & Admin marks submission
 router.post('/marks/bulk', authorizeRoles('faculty', 'teacher', 'admin'), saveBulkMarks);

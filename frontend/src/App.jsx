@@ -76,7 +76,7 @@ function AppRoutes() {
       <Route
         path="/student/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['student', 'faculty', 'admin', 'club_admin', 'placement_admin']}>
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
             <Layout>
               <StudentDashboardPage />
             </Layout>
@@ -162,7 +162,7 @@ function AppRoutes() {
       <Route
         path="/student/results"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
             <Layout>
               <StudentResultsPage />
             </Layout>

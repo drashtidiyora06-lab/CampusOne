@@ -11,30 +11,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchMe = async () => {
       if (!token) {
-        try {
-          const demoRes = await api.post('/auth/demo-token?role=student');
-          if (demoRes.data.success) {
-            localStorage.setItem('campusone_token', demoRes.data.token);
-            setToken(demoRes.data.token);
-            setUser(demoRes.data.user);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.warn('Demo token generation failed, falling back to local user object');
-        }
-
-        setUser({
-          _id: 'default_student_101',
-          name: 'Alex Johnson',
-          email: 'student@college.edu',
-          role: 'student',
-          branch: 'Computer Science',
-          year: '3rd Year',
-          rollNumber: 'CS2026-104',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-          bio: 'CS Undergrad passionate about WebDev & AI.'
-        });
+        setUser(null);
         setLoading(false);
         return;
       }
@@ -43,9 +20,16 @@ export const AuthProvider = ({ children }) => {
         const res = await api.get('/auth/me');
         if (res.data.success) {
           setUser(res.data.user);
+        } else {
+          localStorage.removeItem('campusone_token');
+          setToken('');
+          setUser(null);
         }
       } catch (err) {
-        console.warn('Auth check failed, retaining fallback session');
+        console.warn('Auth check failed, clearing invalid session');
+        localStorage.removeItem('campusone_token');
+        setToken('');
+        setUser(null);
       } finally {
         setLoading(false);
       }
