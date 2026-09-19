@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 import { connectDB } from './config/db.js';
 import { seedDatabase } from './utils/seed.js';
-
-import path from 'path';
 
 // Route Imports
 import authRoutes from './routes/authRoutes.js';
@@ -20,8 +20,10 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-
+import facultyRequestRoutes from './routes/facultyRequestRoutes.js';
 import v3AcademicRoutes from './routes/v3AcademicRoutes.js';
+import { getStudentResults } from './controllers/academicCoreController.js';
+import { protect } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -47,8 +49,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
-import facultyRequestRoutes from './routes/facultyRequestRoutes.js';
-
 app.use('/api/auth', authRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/academics', academicRoutes);
@@ -64,15 +64,27 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-import { getStudentResults } from './controllers/academicCoreController.js';
-import { protect } from './middleware/auth.js';
-
 // CampusOne V3 Routes
 app.use('/api/v3/academics', v3AcademicRoutes);
 app.get('/api/student/results', protect, getStudentResults);
 
+// Serve React Production Frontend Build if available
+const frontendDistPath = path.resolve(process.cwd(), '../frontend/dist');
+const frontendDistLocalPath = path.resolve(process.cwd(), 'frontend/dist');
+const activeDistPath = fs.existsSync(frontendDistPath)
+  ? frontendDistPath
+  : (fs.existsSync(frontendDistLocalPath) ? frontendDistLocalPath : null);
 
-
+if (activeDistPath) {
+  console.log(`[Production] Serving static frontend build from: ${activeDistPath}`);
+  app.use(express.static(activeDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(activeDistPath, 'index.html'));
+  });
+}
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -88,9 +100,9 @@ const startServer = async () => {
   await connectDB();
   await seedDatabase();
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`=======================================================`);
-    console.log(`🚀 CampusOne Shared REST API running on port ${PORT}`);
+    console.log(`🚀 CampusOne Shared REST API running on 0.0.0.0:${PORT}`);
     console.log(`👉 Base API: http://localhost:${PORT}/api`);
     console.log(`=======================================================`);
   });

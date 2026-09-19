@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node start-app.js",
+    "start": "cd backend && node server.js",
+    "start:dev": "node start-app.js",
     "backend": "cd backend && npm start",
     "frontend": "cd frontend && npm run dev",
     "seed": "cd backend && npm run seed",
-    "build": "cd frontend && npm run build"
+    "build": "cd backend && npm install && cd ../frontend && npm install && npm run build"
   }
 }
