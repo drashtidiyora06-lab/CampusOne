@@ -301,14 +301,14 @@ const AdminDashboardPage = () => {
                     <button
                       className="btn-primary"
                       style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                      onClick={() => handleUpdateStatus(req._id, 'approved', 'Approved by Campus Admin')}
+                      onClick={() => handleUpdateServiceStatus(req._id, 'approved', 'Approved by Campus Admin')}
                     >
                       Approve
                     </button>
                     <button
                       className="btn-secondary"
                       style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', borderColor: '#ef4444', color: '#f87171' }}
-                      onClick={() => handleUpdateStatus(req._id, 'rejected', 'Rejected by Campus Admin')}
+                      onClick={() => handleUpdateServiceStatus(req._id, 'rejected', 'Rejected by Campus Admin')}
                     >
                       Reject
                     </button>
