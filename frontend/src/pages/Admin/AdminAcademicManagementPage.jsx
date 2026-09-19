@@ -52,7 +52,7 @@ export default function AdminAcademicManagementPage() {
       <div style={styles.header}>
         <div>
           <div style={styles.badge}>
-            <Shield size={14} /> CAMPUSONE V3 INSTITUTIONAL ADMINISTRATION
+            <Shield size={14} /> CAMPUSONE INSTITUTIONAL ADMINISTRATION
           </div>
           <h1 style={styles.title}>Academic Structure & Teaching Assignments</h1>
           <p style={styles.subtitle}>

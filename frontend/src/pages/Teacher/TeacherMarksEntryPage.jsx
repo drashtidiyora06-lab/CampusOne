@@ -259,7 +259,7 @@ export default function TeacherMarksEntryPage() {
       <div style={styles.header}>
         <div>
           <div style={styles.badge}>
-            <Award size={14} /> CAMPUSONE V3 EXAMINATION ENGINE
+            <Award size={14} /> CAMPUSONE EXAMINATION ENGINE
           </div>
           <h1 style={styles.title}>Teacher Class Marks & Assessment Console</h1>
           <p style={styles.subtitle}>

@@ -72,7 +72,7 @@ export default function StudentResultsPage() {
       <div style={styles.header}>
         <div>
           <div style={styles.badge}>
-            <Award size={14} /> CAMPUSONE V3 EXAMINATION RESULTS
+            <Award size={14} /> CAMPUSONE EXAMINATION RESULTS
           </div>
           <h1 style={styles.title}>Academic Performance & Semester Results</h1>
           <p style={styles.subtitle}>

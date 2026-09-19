@@ -88,7 +88,7 @@ const LoginPage = () => {
           <div style={styles.logoCircle}>
             <GraduationCap size={32} color="#ffffff" />
           </div>
-          <h2 style={styles.title}>CampusOne v2.0 Portal</h2>
+          <h2 style={styles.title}>CampusOne Portal</h2>
           <p style={styles.subtitle}>Role-Based Campus Management System</p>
         </div>
 
