@@ -7,7 +7,7 @@ import AssessmentConfig from '../models/AssessmentConfig.js';
 import User from '../models/User.js';
 import Attendance from '../models/Attendance.js';
 
-// Calculate Best of 3 or Mean ICA and calculate grade
+// Calculate Best of 3 (sum of top 2 out of 50) or Mean of 2 (out of 25) ICA and calculate grade
 export const calculateSubjectPerformance = (marks, subjectType, hasPractical) => {
   const ica1 = marks?.ica1 !== undefined && marks?.ica1 !== null ? Number(marks.ica1) : null;
   const ica2 = marks?.ica2 !== undefined && marks?.ica2 !== null ? Number(marks.ica2) : null;
@@ -17,24 +17,38 @@ export const calculateSubjectPerformance = (marks, subjectType, hasPractical) =>
 
   let bestIcaOrMean = 0;
   let maxIcaComponent = 25;
+  let consideredIcas = [];
 
   if (subjectType === 'Major') {
-    // Best of 3 ICAs
-    const validIcas = [ica1, ica2, ica3].filter((val) => val !== null && !isNaN(val));
-    if (validIcas.length > 0) {
-      bestIcaOrMean = Math.max(...validIcas);
-    }
+    maxIcaComponent = 50; // Sum of best 2 ICAs (25 + 25)
+    const validIcas = [
+      { name: 'ICA 1', val: ica1 },
+      { name: 'ICA 2', val: ica2 },
+      { name: 'ICA 3', val: ica3 }
+    ].filter((item) => item.val !== null && !isNaN(item.val));
+
+    // Sort descending by value to get top 2
+    validIcas.sort((a, b) => b.val - a.val);
+
+    const top2 = validIcas.slice(0, 2);
+    bestIcaOrMean = top2.reduce((acc, curr) => acc + curr.val, 0);
+    consideredIcas = top2.map((item) => item.name);
   } else {
-    // Minor: Mean of ICA 1 and ICA 2
-    const validIcas = [ica1, ica2].filter((val) => val !== null && !isNaN(val));
+    maxIcaComponent = 25; // Average of 2 ICAs
+    const validIcas = [
+      { name: 'ICA 1', val: ica1 },
+      { name: 'ICA 2', val: ica2 }
+    ].filter((item) => item.val !== null && !isNaN(item.val));
+
     if (validIcas.length > 0) {
-      const sum = validIcas.reduce((acc, curr) => acc + curr, 0);
+      const sum = validIcas.reduce((acc, curr) => acc + curr.val, 0);
       bestIcaOrMean = Math.round((sum / validIcas.length) * 10) / 10;
     }
+    consideredIcas = validIcas.map((item) => item.name);
   }
 
   // Calculate Total Max & Total Obtained
-  let totalMaxMarks = maxIcaComponent + 75; // 25 ICA + 75 Final Exam
+  let totalMaxMarks = maxIcaComponent + 75; // 50 (Major) or 25 (Minor) + 75 Final Exam
   let totalMarksObtained = bestIcaOrMean + (finalExam || 0);
 
   if (hasPractical) {
@@ -60,6 +74,8 @@ export const calculateSubjectPerformance = (marks, subjectType, hasPractical) =>
     ica2,
     ica3,
     bestIcaOrMean,
+    maxIcaComponent,
+    consideredIcas,
     practical,
     finalExam,
     totalMarksObtained,
@@ -571,6 +587,7 @@ export const saveAttendance = async (req, res) => {
 
     let updated = 0;
     for (const item of attendanceData) {
+      const studentUser = await User.findById(item.studentId).select('name studentId rollNumber');
       await Attendance.findOneAndUpdate(
         {
           student: item.studentId,
@@ -579,6 +596,8 @@ export const saveAttendance = async (req, res) => {
         },
         {
           student: item.studentId,
+          studentIdCode: studentUser?.studentId || `STU-${item.studentId.toString().slice(-4)}`,
+          studentName: studentUser?.name || 'Student',
           teachingAssignment: assignment._id,
           course: assignment.course,
           semester: assignment.semester,
