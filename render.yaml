@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: campusone
+    name: campusone-production
     env: node
     plan: free
     buildCommand: npm run build
