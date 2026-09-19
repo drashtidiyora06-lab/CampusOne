@@ -17,6 +17,8 @@ const UserSchema = new mongoose.Schema(
     course: { type: String, default: 'BCOM' },
     semester: { type: Number, default: 3 },
     division: { type: String, default: 'A' },
+    academicLevel: { type: String, enum: ['UG', 'PG'], default: 'UG' },
+    yearLevel: { type: String, default: 'SY' },
     department: { type: String, default: 'Computer Science' },
     branch: { type: String, default: 'Computer Science' },
     year: { type: String, default: '3rd Year' },

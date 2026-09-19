@@ -15,11 +15,14 @@ import {
   GraduationCap,
   Shield,
   FileText,
-  UserCheck
+  Clock,
+  ClipboardList,
+  Building,
+  BarChart3,
+  History
 } from 'lucide-react';
 
 const Sidebar = () => {
-
   const { user } = useAuth();
 
   const getNavItems = () => {
@@ -27,62 +30,83 @@ const Sidebar = () => {
 
     if (role === 'faculty' || role === 'teacher') {
       return [
-        { label: 'Faculty Portal', path: '/teacher/dashboard', icon: LayoutDashboard },
+        { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard },
+        { label: 'My Teaching Assignments', path: '/teacher/dashboard#assignments', icon: ClipboardList },
+        { label: 'My Classes', path: '/teacher/dashboard#classes', icon: Users },
         { label: 'Marks Management', path: '/teacher/marks', icon: FileCheck2 },
-        { label: 'Submissions & Grading', path: '/teacher/submissions', icon: FileText },
-        { label: 'Class Academics', path: '/academics', icon: BookOpen },
+        { label: 'Attendance Management', path: '/teacher/attendance', icon: Clock },
+        { label: 'Assignments', path: '/teacher/dashboard#assignments-list', icon: FileText },
         { label: 'Study Resources', path: '/resources', icon: FolderDown },
-        { label: 'Campus Notices', path: '/notices', icon: Bell },
-        { label: 'Campus Guide', path: '/campus-guide', icon: Compass },
-        { label: 'My Profile', path: '/profile', icon: User }
+        { label: 'My Timetable', path: '/academics', icon: BookOpen },
+        { label: 'Faculty Requests', path: '/teacher/requests', icon: Building },
+        { label: 'Notices', path: '/notices', icon: Bell },
+        { label: 'Profile', path: '/profile', icon: User }
       ];
     }
 
     if (role === 'admin') {
       return [
-        { label: 'Admin Control Panel', path: '/admin/dashboard', icon: Shield },
+        { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+        { label: 'Student Management', path: '/admin/dashboard#students', icon: Users },
+        { label: 'Faculty Management', path: '/admin/dashboard#faculty', icon: GraduationCap },
         { label: 'Academic Management', path: '/admin/academics', icon: BookOpen },
-        { label: 'Service Request Approvals', path: '/services', icon: FileCheck2 },
-        { label: 'Notices & Banners', path: '/notices', icon: Bell },
-        { label: 'Study Resources', path: '/resources', icon: FolderDown },
+        { label: 'Marks & Results', path: '/admin/academics#results', icon: FileCheck2 },
+        { label: 'Attendance', path: '/admin/academics#attendance', icon: Clock },
+        { label: 'Timetable', path: '/admin/academics#timetable', icon: Clock },
+        { label: 'Student Requests', path: '/admin/requests?tab=student', icon: FileText },
+        { label: 'Faculty Requests', path: '/admin/requests?tab=faculty', icon: Building },
+        { label: 'Clubs & Teacher In-Charge', path: '/clubs', icon: Users },
+        { label: 'Placement Management', path: '/placements', icon: Briefcase },
+        { label: 'Notices', path: '/notices', icon: Bell },
+        { label: 'Resources', path: '/resources', icon: FolderDown },
         { label: 'Campus Directory', path: '/campus-guide', icon: Compass },
-        { label: 'Clubs & Societies', path: '/clubs', icon: Users },
-        { label: 'Placement Drives', path: '/placements', icon: Briefcase },
-        { label: 'My Profile', path: '/profile', icon: User }
+        { label: 'Reports', path: '/admin/dashboard#reports', icon: BarChart3 },
+        { label: 'Audit', path: '/admin/dashboard#audit', icon: History },
+        { label: 'Profile', path: '/profile', icon: User }
       ];
     }
 
     if (role === 'club_admin') {
       return [
-        { label: 'Club Workspace', path: '/club-admin/dashboard', icon: LayoutDashboard },
-        { label: 'Clubs Directory', path: '/clubs', icon: Users },
+        { label: 'Dashboard', path: '/club-admin/dashboard', icon: LayoutDashboard },
+        { label: 'My Club', path: '/clubs', icon: Users },
+        { label: 'Members', path: '/club-admin/dashboard#members', icon: Users },
+        { label: 'Events', path: '/club-admin/dashboard#events', icon: Bell },
+        { label: 'Activities', path: '/club-admin/dashboard#activities', icon: ClipboardList },
         { label: 'Announcements', path: '/notices', icon: Bell },
-        { label: 'My Profile', path: '/profile', icon: User }
+        { label: 'Profile', path: '/profile', icon: User }
       ];
     }
 
     if (role === 'placement_admin') {
       return [
-        { label: 'Placement Officer', path: '/placement-admin/dashboard', icon: LayoutDashboard },
-        { label: 'Active Placement Drives', path: '/placements', icon: Briefcase },
-        { label: 'Announcements', path: '/notices', icon: Bell },
-        { label: 'My Profile', path: '/profile', icon: User }
+        { label: 'Dashboard', path: '/placement-admin/dashboard', icon: LayoutDashboard },
+        { label: 'Placement Drives', path: '/placements', icon: Briefcase },
+        { label: 'Applications', path: '/placement-admin/dashboard#applications', icon: FileText },
+        { label: 'Eligibility', path: '/placement-admin/dashboard#eligibility', icon: FileCheck2 },
+        { label: 'Companies', path: '/placement-admin/dashboard#companies', icon: Building },
+        { label: 'Analytics', path: '/placement-admin/dashboard#analytics', icon: BarChart3 },
+        { label: 'Notices', path: '/notices', icon: Bell },
+        { label: 'Profile', path: '/profile', icon: User }
       ];
     }
 
-    // Default Student Navigation
+    // STUDENT
     return [
       { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-      { label: 'Exam Results', path: '/student/results', icon: FileCheck2 },
-      { label: 'Notices', path: '/notices', icon: Bell },
       { label: 'Academics', path: '/academics', icon: BookOpen },
+      { label: 'Timetable', path: '/academics?tab=timetable', icon: Clock },
+      { label: 'Attendance', path: '/student/dashboard#attendance', icon: Clock },
+      { label: 'Marks & Results', path: '/student/results', icon: FileCheck2 },
+      { label: 'Assignments', path: '/academics?tab=assignments', icon: FileText },
       { label: 'Resources', path: '/resources', icon: FolderDown },
       { label: 'Campus Guide', path: '/campus-guide', icon: Compass },
       { label: 'Clubs & Events', path: '/clubs', icon: Users },
       { label: 'Placements', path: '/placements', icon: Briefcase },
-      { label: 'Student Services', path: '/services', icon: UserCheck },
+      { label: 'Student Services', path: '/services', icon: FileText },
+      { label: 'Notices', path: '/notices', icon: Bell },
       { label: 'Productivity', path: '/productivity', icon: CheckSquare },
-      { label: 'My Profile', path: '/profile', icon: User }
+      { label: 'Profile', path: '/profile', icon: User }
     ];
   };
 
@@ -97,7 +121,7 @@ const Sidebar = () => {
         </div>
         <div>
           <h1 style={styles.brandTitle}>CampusOne</h1>
-          <span style={styles.brandSubtitle}>v3.0 Academic Engine</span>
+          <span style={styles.brandSubtitle}>Management Platform</span>
         </div>
       </div>
 
@@ -126,14 +150,12 @@ const Sidebar = () => {
 
       {/* Footer info */}
       <div style={styles.footer}>
-        <div style={styles.footerBadge}>CampusOne v3.0 Core</div>
+        <div style={styles.footerBadge}>CampusOne Core</div>
         <div style={styles.footerText}>© 2026 CampusOne</div>
       </div>
     </aside>
   );
 };
-
-
 
 const styles = {
   sidebar: {

@@ -32,7 +32,7 @@ const V3ResultSchema = new mongoose.Schema(
       type: String,
       required: true,
       uppercase: true,
-      enum: ['BCOM', 'BSCIT', 'BMS', 'BAF', 'BMM']
+      enum: ['BCOM', 'BSCIT', 'BMS', 'BAF', 'BMM', 'MCA', 'MBA', 'MSCIT', 'MCOM']
     },
     semester: {
       type: Number,

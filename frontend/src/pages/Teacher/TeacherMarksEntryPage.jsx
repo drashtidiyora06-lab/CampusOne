@@ -132,15 +132,35 @@ export default function TeacherMarksEntryPage() {
     const fe = row.finalExam !== '' && row.finalExam !== null ? Number(row.finalExam) : null;
 
     let bestOrMean = 0;
+    let maxIcaComp = 25;
+    let considered = [];
+
     if (subjectType === 'Major') {
-      const valid = [i1, i2, i3].filter((x) => x !== null && !isNaN(x));
-      if (valid.length > 0) bestOrMean = Math.max(...valid);
+      maxIcaComp = 50;
+      const valid = [
+        { name: 'ICA1', val: i1 },
+        { name: 'ICA2', val: i2 },
+        { name: 'ICA3', val: i3 }
+      ].filter((x) => x.val !== null && !isNaN(x.val));
+
+      valid.sort((a, b) => b.val - a.val);
+      const top2 = valid.slice(0, 2);
+      bestOrMean = top2.reduce((acc, curr) => acc + curr.val, 0);
+      considered = top2.map((t) => t.name);
     } else {
-      const valid = [i1, i2].filter((x) => x !== null && !isNaN(x));
-      if (valid.length > 0) bestOrMean = Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10;
+      maxIcaComp = 25;
+      const valid = [
+        { name: 'ICA1', val: i1 },
+        { name: 'ICA2', val: i2 }
+      ].filter((x) => x.val !== null && !isNaN(x.val));
+
+      if (valid.length > 0) {
+        bestOrMean = Math.round((valid.reduce((acc, curr) => acc + curr.val, 0) / valid.length) * 10) / 10;
+      }
+      considered = valid.map((t) => t.name);
     }
 
-    let maxTot = 100;
+    let maxTot = maxIcaComp + 75; // 50 (Major) or 25 (Minor) + 75 Final Exam
     let obt = bestOrMean + (fe || 0);
     if (hasPractical) {
       maxTot += 50;
@@ -157,7 +177,7 @@ export default function TeacherMarksEntryPage() {
     else if (pct >= 45) grade = 'C';
     else if (pct >= 40) grade = 'D';
 
-    return { bestOrMean, obt, maxTot, pct, grade };
+    return { bestOrMean, maxIcaComp, considered, obt, maxTot, pct, grade };
   };
 
   const handleSaveFullGrid = async () => {

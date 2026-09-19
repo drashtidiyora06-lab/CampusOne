@@ -12,6 +12,10 @@ const ClubSchema = new mongoose.Schema(
     logoUrl: { type: String },
     adminName: { type: String, required: true },
     adminEmail: { type: String },
+    teacherInCharge: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    teacherInChargeName: { type: String, default: '' },
+    teacherInChargeEmail: { type: String, default: '' },
+    clubAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     membersCount: { type: Number, default: 0 },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     events: [

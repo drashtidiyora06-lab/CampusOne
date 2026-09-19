@@ -7,7 +7,12 @@ const CourseSchema = new mongoose.Schema(
       required: true,
       unique: true,
       uppercase: true,
-      enum: ['BCOM', 'BSCIT', 'BMS', 'BAF', 'BMM']
+      enum: ['BCOM', 'BSCIT', 'BMS', 'BAF', 'BMM', 'MCA', 'MBA', 'MSCIT', 'MCOM']
+    },
+    academicLevel: {
+      type: String,
+      enum: ['UG', 'PG'],
+      default: 'UG'
     },
     name: {
       type: String,

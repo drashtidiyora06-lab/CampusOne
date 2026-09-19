@@ -231,13 +231,32 @@ const TeacherDashboardPage = () => {
                     </div>
                   </div>
 
-                  <button
-                    style={styles.manageMarksBtn}
-                    onClick={() => navigate(`/teacher/marks?assignmentId=${ta._id}`)}
-                  >
-                    <span>Manage Marks & Enter Grades</span>
-                    <ArrowRight size={16} />
-                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '1rem' }}>
+                    <button
+                      style={styles.manageMarksBtn}
+                      onClick={() => navigate(`/teacher/marks?assignmentId=${ta._id}`)}
+                    >
+                      <Award size={14} /> Marks
+                    </button>
+                    <button
+                      style={{ ...styles.manageMarksBtn, backgroundColor: '#3b82f6' }}
+                      onClick={() => navigate(`/teacher/attendance?assignmentId=${ta._id}`)}
+                    >
+                      <Clock size={14} /> Attendance
+                    </button>
+                    <button
+                      style={{ ...styles.manageMarksBtn, backgroundColor: '#8b5cf6' }}
+                      onClick={() => setActiveTab('assignments')}
+                    >
+                      <FileText size={14} /> Assignments
+                    </button>
+                    <button
+                      style={{ ...styles.manageMarksBtn, backgroundColor: '#10b981' }}
+                      onClick={() => navigate('/resources')}
+                    >
+                      <BookOpen size={14} /> Resources
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

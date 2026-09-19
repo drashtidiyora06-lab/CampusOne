@@ -47,6 +47,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+import facultyRequestRoutes from './routes/facultyRequestRoutes.js';
+
 app.use('/api/auth', authRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/academics', academicRoutes);
@@ -55,6 +57,7 @@ app.use('/api/campus-guide', campusGuideRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/placements', placementRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/faculty-requests', facultyRequestRoutes);
 app.use('/api/productivity', taskRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);

@@ -30,10 +30,19 @@ export const protect = async (req, res, next) => {
 
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    const userRole = req.user?.role;
+    let allowed = false;
+
+    if (userRole) {
+      if (roles.includes(userRole)) allowed = true;
+      if (roles.includes('faculty') && userRole === 'teacher') allowed = true;
+      if (roles.includes('teacher') && userRole === 'faculty') allowed = true;
+    }
+
+    if (!req.user || !allowed) {
       return res.status(403).json({
         success: false,
-        message: `Role (${req.user?.role || 'guest'}) is not allowed to access this resource`
+        message: `Role (${userRole || 'guest'}) is not allowed to access this resource`
       });
     }
     next();

@@ -7,14 +7,14 @@ const ServiceRequestSchema = new mongoose.Schema(
     rollNumber: { type: String, required: true },
     requestType: {
       type: String,
-      enum: ['id_card', 'bonafide', 'hostel_complaint', 'fee_receipt'],
+      enum: ['id_card', 'bonafide', 'hostel_complaint', 'fee_receipt', 'general_request', 'general'],
       required: true
     },
     subject: { type: String, required: true },
     details: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'processing', 'approved', 'rejected', 'resolved'],
       default: 'pending'
     },
     adminRemark: { type: String, default: '' },

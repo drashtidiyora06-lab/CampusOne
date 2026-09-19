@@ -188,7 +188,7 @@ export default function StudentResultsPage() {
                     <th style={styles.th}>ICA 1 (25)</th>
                     <th style={styles.th}>ICA 2 (25)</th>
                     <th style={styles.th}>ICA 3 (25)</th>
-                    <th style={styles.th}>Best ICA / Mean</th>
+                    <th style={styles.th}>ICA Component (Best 2 / Mean)</th>
                     <th style={styles.th}>Practical (50)</th>
                     <th style={styles.th}>Final Exam (75)</th>
                     <th style={styles.th}>Total (Obtained/Max)</th>
@@ -212,7 +212,7 @@ export default function StudentResultsPage() {
                       <td style={styles.td}>{item.ica1 !== null ? item.ica1 : '-'}</td>
                       <td style={styles.td}>{item.ica2 !== null ? item.ica2 : '-'}</td>
                       <td style={styles.td}>{item.subjectType === 'Major' ? (item.ica3 !== null ? item.ica3 : '-') : 'N/A'}</td>
-                      <td style={styles.tdHighlight}>{item.bestIcaOrMean}</td>
+                      <td style={styles.tdHighlight}>{item.bestIcaOrMean} / {item.subjectType === 'Major' ? 50 : 25}</td>
                       <td style={styles.td}>{item.hasPractical ? (item.practical !== null ? item.practical : '-') : 'N/A'}</td>
                       <td style={styles.td}>{item.finalExam !== null ? item.finalExam : '-'}</td>
                       <td style={styles.tdBold}>

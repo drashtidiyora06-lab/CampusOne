@@ -33,7 +33,7 @@ const PlacementPage = () => {
     description: ''
   });
 
-  const isPlacementAdmin = ['placement_admin', 'faculty'].includes(user?.role);
+  const isPlacementAdmin = ['placement_admin', 'admin'].includes(user?.role);
 
   useEffect(() => {
     fetchPlacementData();
@@ -197,14 +197,20 @@ const PlacementPage = () => {
                     )}
                   </div>
 
-                  <button
-                    className={hasApplied ? 'btn-secondary' : 'btn-primary'}
-                    disabled={!isEligible || hasApplied}
-                    onClick={() => handleApplyDrive(drive._id)}
-                  >
-                    {hasApplied ? <Check size={16} color="#34d399" /> : <Briefcase size={16} />}
-                    {hasApplied ? 'Applied' : 'Apply Now'}
-                  </button>
+                  {user?.role === 'student' ? (
+                    <button
+                      className={hasApplied ? 'btn-secondary' : 'btn-primary'}
+                      disabled={!isEligible || hasApplied}
+                      onClick={() => handleApplyDrive(drive._id)}
+                    >
+                      {hasApplied ? <Check size={16} color="#34d399" /> : <Briefcase size={16} />}
+                      {hasApplied ? 'Applied' : 'Apply Now'}
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>
+                      Placement Drive Active
+                    </span>
+                  )}
                 </div>
               </div>
             );

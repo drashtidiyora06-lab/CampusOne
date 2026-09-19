@@ -16,7 +16,7 @@ import AdminDashboardPage from './pages/Admin/AdminDashboardPage';
 import ClubAdminDashboardPage from './pages/ClubAdmin/ClubAdminDashboardPage';
 import PlacementAdminDashboardPage from './pages/PlacementAdmin/PlacementAdminDashboardPage';
 
-// Shared Pages
+// Shared & Feature Pages
 import NoticesPage from './pages/Notices/NoticesPage';
 import AcademicsPage from './pages/Academics/AcademicsPage';
 import ResourcesPage from './pages/Resources/ResourcesPage';
@@ -27,11 +27,15 @@ import ServicesPage from './pages/Services/ServicesPage';
 import ProductivityPage from './pages/Productivity/ProductivityPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 
-// CampusOne V3 Pages
+// Marks, Attendance & Results Pages
 import TeacherMarksEntryPage from './pages/Teacher/TeacherMarksEntryPage';
+import TeacherAttendancePage from './pages/Teacher/TeacherAttendancePage';
 import StudentResultsPage from './pages/Student/StudentResultsPage';
 import AdminAcademicManagementPage from './pages/Admin/AdminAcademicManagementPage';
 
+// Request Workflow Pages
+import FacultyRequestsPage from './pages/Teacher/FacultyRequestsPage';
+import AdminRequestsPage from './pages/Admin/AdminRequestsPage';
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -83,6 +87,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/student/results"
+        element={
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <Layout>
+              <StudentResultsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Teacher Portal Routes */}
       <Route
@@ -116,11 +130,21 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/teacher/submissions"
+        path="/teacher/requests"
         element={
           <ProtectedRoute allowedRoles={['faculty', 'teacher', 'admin']}>
             <Layout>
-              <TeacherDashboardPage />
+              <FacultyRequestsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher/attendance"
+        element={
+          <ProtectedRoute allowedRoles={['faculty', 'teacher', 'admin']}>
+            <Layout>
+              <TeacherAttendancePage />
             </Layout>
           </ProtectedRoute>
         }
@@ -148,28 +172,15 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/admin/users"
+        path="/admin/requests"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <Layout>
-              <AdminDashboardPage />
+              <AdminRequestsPage />
             </Layout>
           </ProtectedRoute>
         }
       />
-
-      {/* Student Results Route */}
-      <Route
-        path="/student/results"
-        element={
-          <ProtectedRoute allowedRoles={['student', 'admin']}>
-            <Layout>
-              <StudentResultsPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
 
       {/* Club Admin Routes */}
       <Route
@@ -259,7 +270,7 @@ function AppRoutes() {
       <Route
         path="/services"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
             <Layout>
               <ServicesPage />
             </Layout>
@@ -269,7 +280,7 @@ function AppRoutes() {
       <Route
         path="/productivity"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['student', 'admin']}>
             <Layout>
               <ProductivityPage />
             </Layout>

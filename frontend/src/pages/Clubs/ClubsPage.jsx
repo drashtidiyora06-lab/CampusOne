@@ -134,18 +134,23 @@ const ClubsPage = () => {
                     <Users size={14} /> {club.membersCount} Members
                   </div>
 
-
-                  <button
-                    className={isMember ? 'btn-secondary' : 'btn-primary'}
-                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleJoinClub(club._id);
-                    }}
-                  >
-                    {isMember ? <UserCheck size={14} color="#34d399" /> : <Plus size={14} />}
-                    {isMember ? 'Joined' : 'Join Club'}
-                  </button>
+                  {user?.role === 'student' ? (
+                    <button
+                      className={isMember ? 'btn-secondary' : 'btn-primary'}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleJoinClub(club._id);
+                      }}
+                    >
+                      {isMember ? <UserCheck size={14} color="#34d399" /> : <Plus size={14} />}
+                      {isMember ? 'Joined' : 'Join Club'}
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600 }}>
+                      Teacher In-Charge: {club.teacherInChargeName || club.adminName}
+                    </span>
+                  )}
                 </div>
               </div>
             );
