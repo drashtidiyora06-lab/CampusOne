@@ -3,11 +3,25 @@ import { Timetable, Syllabus, Assignment, ExamSchedule, Result } from '../models
 // GET /api/academics/timetable
 export const getTimetable = async (req, res) => {
   try {
-    const { branch, semester } = req.query;
-    const timetable = await Timetable.findOne({
-      branch: branch || 'Computer Science',
-      semester: semester || '6'
-    }) || await Timetable.findOne();
+    const { branch, semester, course } = req.query;
+    const userCourse = req.user?.course || 'BSCIT';
+    const userSem = String(req.user?.semester || 3);
+
+    const searchCourse = (course || branch || userCourse).toUpperCase();
+    const searchSem = String(semester || userSem);
+
+    let timetable = await Timetable.findOne({
+      $or: [
+        { branch: `${searchCourse}-A`, semester: searchSem },
+        { branch: `${searchCourse}-B`, semester: searchSem },
+        { branch: searchCourse, semester: searchSem },
+        { branch: new RegExp(searchCourse, 'i'), semester: searchSem }
+      ]
+    });
+
+    if (!timetable) {
+      timetable = await Timetable.findOne({ semester: searchSem }) || await Timetable.findOne();
+    }
     res.json({ success: true, timetable });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -13,10 +13,23 @@ import {
   MapPin,
   ChevronRight
 } from 'lucide-react';
+import { calculateCurrentSemester, getValidSemestersForCourse, isSemesterHistorical } from '../../utils/semesterUtil';
 
 const AcademicsPage = () => {
   const { user } = useAuth();
+  const isFaculty = user?.role === 'faculty' || user?.role === 'teacher';
   const [activeTab, setActiveTab] = useState('timetable');
+
+  const defaultCourse = user?.course || 'BSCIT';
+  const defaultLevel = user?.academicLevel || (['MCA', 'MBA', 'MSCIT', 'MCOM'].includes(defaultCourse) ? 'PG' : 'UG');
+  const defaultSem = calculateCurrentSemester({
+    academicLevel: defaultLevel,
+    yearLevel: user?.yearLevel || 'SY',
+    currentDate: new Date()
+  });
+
+  const [selectedCourse, setSelectedCourse] = useState(defaultCourse);
+  const [selectedSem, setSelectedSem] = useState(defaultSem);
 
   const [timetable, setTimetable] = useState(null);
   const [syllabus, setSyllabus] = useState([]);
@@ -31,16 +44,16 @@ const AcademicsPage = () => {
 
   useEffect(() => {
     fetchAcademicData();
-  }, []);
+  }, [selectedCourse, selectedSem]);
 
   const fetchAcademicData = async () => {
     try {
       const [ttRes, sylRes, asgRes, exmRes, resRes] = await Promise.all([
-        api.get('/academics/timetable'),
-        api.get('/academics/syllabus'),
+        api.get(`/academics/timetable?course=${selectedCourse}&semester=${selectedSem}`),
+        api.get(`/academics/syllabus?branch=${selectedCourse}&semester=${selectedSem}`),
         api.get('/academics/assignments'),
         api.get('/academics/exams'),
-        api.get('/academics/results')
+        api.get(`/academics/results?semester=${selectedSem}`)
       ]);
 
       if (ttRes.data.success) setTimetable(ttRes.data.timetable);
@@ -113,6 +126,63 @@ const AcademicsPage = () => {
       {/* TAB 1: TIMETABLE */}
       {activeTab === 'timetable' && (
         <div style={styles.timetableStack}>
+          {/* Dynamic Academic Context Toolbar */}
+          <div style={{ backgroundColor: '#1e293b', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.2rem' }}>Program Course</label>
+                <select
+                  style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '0.45rem 0.85rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600 }}
+                  value={selectedCourse}
+                  onChange={(e) => {
+                    setSelectedCourse(e.target.value);
+                    const lvl = ['MCA', 'MBA', 'MSCIT', 'MCOM'].includes(e.target.value) ? 'PG' : 'UG';
+                    setSelectedSem(calculateCurrentSemester({ academicLevel: lvl, yearLevel: 'FY', currentDate: new Date() }));
+                  }}
+                >
+                  <optgroup label="Undergraduate (UG)">
+                    <option value="BCOM">BCOM (Bachelor of Commerce)</option>
+                    <option value="BSCIT">BSCIT (B.Sc. IT)</option>
+                    <option value="BMS">BMS (B. Management Studies)</option>
+                    <option value="BAF">BAF (Accounting & Finance)</option>
+                    <option value="BMM">BMM (Mass Media)</option>
+                  </optgroup>
+                  <optgroup label="Postgraduate (PG)">
+                    <option value="MCA">MCA (Master of Computer Apps)</option>
+                    <option value="MBA">MBA (Master of Business Admin)</option>
+                    <option value="MSCIT">MSCIT (M.Sc. IT)</option>
+                    <option value="MCOM">MCOM (Master of Commerce)</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.2rem' }}>Semester</label>
+                <select
+                  style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '0.45rem 0.85rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600 }}
+                  value={selectedSem}
+                  onChange={(e) => setSelectedSem(Number(e.target.value))}
+                >
+                  {getValidSemestersForCourse(['MCA', 'MBA', 'MSCIT', 'MCOM'].includes(selectedCourse) ? 'PG' : 'UG').map((item) => (
+                    <option key={item.sem} value={item.sem}>
+                      Semester {item.sem} ({item.yearLevel} - {item.period} Sem) {isSemesterHistorical(item.sem, defaultSem) ? '[Archived]' : item.sem === defaultSem ? '[Current Active]' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {isSemesterHistorical(selectedSem, defaultSem) ? (
+                <span className="badge badge-amber" style={{ padding: '0.35rem 0.75rem' }}>Archived / Historical Record</span>
+              ) : Number(selectedSem) === Number(defaultSem) ? (
+                <span className="badge badge-green" style={{ padding: '0.35rem 0.75rem' }}>Current Active Semester</span>
+              ) : (
+                <span className="badge badge-indigo" style={{ padding: '0.35rem 0.75rem' }}>Upcoming Semester</span>
+              )}
+            </div>
+          </div>
+
           {timetable?.schedule?.map((dayObj) => (
             <div key={dayObj.day} className="card" style={{ padding: '1.25rem' }}>
               <h3 style={styles.dayHeading}>
@@ -235,46 +305,48 @@ const AcademicsPage = () => {
             </div>
           </div>
 
-          {/* Results Card */}
-          <div className="card">
-            <h3 style={{ ...styles.dayHeading, marginBottom: '1rem' }}>
-              <Award size={18} color="#34d399" /> Student Gradecard ({results?.semester || 'Semester 5'})
-            </h3>
+          {/* Results Card (Students Only) */}
+          {!isFaculty && (
+            <div className="card">
+              <h3 style={{ ...styles.dayHeading, marginBottom: '1rem' }}>
+                <Award size={18} color="#34d399" /> Student Gradecard ({results?.semester || 'Semester 5'})
+              </h3>
 
-            <div style={styles.gpaBanner}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>CUMULATIVE CGPA</span>
-                <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#34d399' }}>
-                  {results?.cgpa || '8.85'}
+              <div style={styles.gpaBanner}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>CUMULATIVE CGPA</span>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#34d399' }}>
+                    {results?.cgpa || '8.85'}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>SEMESTER SGPA</span>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#60a5fa' }}>
+                    {results?.sgpa || '9.10'}
+                  </div>
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>SEMESTER SGPA</span>
-                <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#60a5fa' }}>
-                  {results?.sgpa || '9.10'}
-                </div>
-              </div>
-            </div>
 
-            <table style={styles.resultTable}>
-              <thead>
-                <tr>
-                  <th>Subject Code</th>
-                  <th>Subject Name</th>
-                  <th>Grade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results?.subjects?.map((sub, idx) => (
-                  <tr key={idx}>
-                    <td>{sub.code}</td>
-                    <td>{sub.name}</td>
-                    <td style={{ fontWeight: 700, color: '#34d399' }}>{sub.grade}</td>
+              <table style={styles.resultTable}>
+                <thead>
+                  <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Grade</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {results?.subjects?.map((sub, idx) => (
+                    <tr key={idx}>
+                      <td>{sub.code}</td>
+                      <td>{sub.name}</td>
+                      <td style={{ fontWeight: 700, color: '#34d399' }}>{sub.grade}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
