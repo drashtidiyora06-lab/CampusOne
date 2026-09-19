@@ -5,9 +5,12 @@ const CampusGuideSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     category: {
       type: String,
-      enum: ['library', 'lab', 'canteen', 'admin', 'hostel', 'sports'],
+      enum: ['academic', 'library', 'lab', 'canteen', 'admin', 'hostel', 'sports', 'medical', 'parking', 'services', 'other'],
       required: true
     },
+    building: { type: String },
+    floor: { type: String },
+    roomNumber: { type: String },
     location: { type: String, required: true },
     timings: { type: String, required: true },
     isOpen: { type: Boolean, default: true },

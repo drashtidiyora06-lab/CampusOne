@@ -34,11 +34,15 @@ const CampusGuidePage = () => {
   };
 
   const categories = [
-    { key: 'all', label: 'All Places', icon: Building },
+    { key: 'all', label: 'All Campus Facilities', icon: Building },
+    { key: 'academic', label: 'Academic Blocks', icon: BookOpen },
     { key: 'library', label: 'Libraries', icon: BookOpen },
-    { key: 'lab', label: 'Tech Labs', icon: Cpu },
-    { key: 'canteen', label: 'Food & Cafes', icon: Coffee },
-    { key: 'admin', label: 'Admin Offices', icon: Building }
+    { key: 'lab', label: 'Laboratories', icon: Cpu },
+    { key: 'canteen', label: 'Canteen & Food', icon: Coffee },
+    { key: 'admin', label: 'Administration Offices', icon: Building },
+    { key: 'sports', label: 'Sports & Gym', icon: Compass },
+    { key: 'hostel', label: 'Hostels', icon: Building },
+    { key: 'services', label: 'Student Services', icon: Compass }
   ];
 
   return (
@@ -47,7 +51,7 @@ const CampusGuidePage = () => {
         <div>
           <h1 className="page-title">Campus Guide & Directory</h1>
           <p className="page-subtitle">
-            Essential campus facilities, laboratory timings, administrative office contacts, and dining halls
+            Essential campus facilities, academic blocks, laboratory timings, administrative office contacts, and dining halls
           </p>
         </div>
       </div>
@@ -91,9 +95,16 @@ const CampusGuidePage = () => {
             </div>
 
             <div style={{ padding: '1.25rem' }}>
-              <span className="badge badge-indigo" style={{ marginBottom: '0.5rem' }}>
-                {loc.category}
-              </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span className="badge badge-indigo">
+                  {loc.category?.toUpperCase()}
+                </span>
+                {(loc.building || loc.roomNumber) && (
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>
+                    {loc.building || ''} {loc.floor ? `• ${loc.floor}` : ''} {loc.roomNumber ? `(Room ${loc.roomNumber})` : ''}
+                  </span>
+                )}
+              </div>
               <h3 style={styles.locName}>{loc.name}</h3>
               <p style={styles.locDesc}>{loc.description}</p>
 
