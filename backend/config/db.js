@@ -10,16 +10,24 @@ let mongoMemoryServer = null;
 
 export const connectDB = async () => {
   try {
+    if (mongoose.connection.readyState >= 1) {
+      return;
+    }
+
     const mongoUri = process.env.MONGODB_URI;
-    
+
     // 1. Try Remote/Atlas MongoDB
     if (mongoUri) {
       try {
-        await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
+        await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
         console.log(`[DB] Connected to MongoDB Atlas/Remote successfully.`);
         return;
       } catch (err) {
-        console.warn(`[DB] Remote Atlas connection failed: ${err.message}. Trying local Mongo / Memory Server...`);
+        console.warn(`[DB] Remote Atlas connection failed: ${err.message}.`);
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+          throw err;
+        }
+        console.warn(`[DB] Trying local Mongo / Memory Server...`);
       }
     }
 
