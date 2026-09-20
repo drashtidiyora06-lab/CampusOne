@@ -2,6 +2,12 @@
 
 CampusOne is a full-stack campus companion app monorepo for college students, faculty, club leaders, and placement administrators available on **Web and Mobile** powered by a shared Node.js + Express + MongoDB backend.
 
+Team members:
+Nyasa Salot 
+Kirti Patil
+Drashti Diyora
+Purva Sakpal
+
 ---
 
 ## Repo Structure
