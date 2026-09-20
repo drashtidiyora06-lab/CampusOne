@@ -5,10 +5,10 @@ CampusOne is a full-stack campus companion app monorepo for college students, fa
 App Link:-https://campusone-ovwl.onrender.com
 
 Team members:
-Nyasa Salot 
-Kirti Patil
-Drashti Diyora
-Purva Sakpal
+Nyasa Salot 53013240053
+Kirti Patil 53013240045
+Drashti Diyora 53013240048
+Purva Sakpal 53013240047
 
 ---
 
